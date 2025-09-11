@@ -41,10 +41,10 @@ export default function PatientOnboarding() {
     fetchPatientStats();
   }, []);
 
-  // 🔹 Fetch total patients from backend
+  // 🔹 Fetch patients + stats from backend
   const fetchPatientStats = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/stats`);
+      const res = await fetch(`${BASE_URL}`);
       const data = await res.json();
       setTotalPatients(data.totalPatients || 0);
     } catch (error) {
@@ -120,10 +120,9 @@ export default function PatientOnboarding() {
         description: message,
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
-    }finally {
-    setIsSubmitting(false);
-  }
+    }
   };
 
   return (

@@ -15,19 +15,14 @@ exports.createPatient = async (req, res) => {
   }
 };
 
-exports.getPatientStats = async (req, res) => {
-  try {
-    const count = await Patient.countDocuments();
-    res.json({ totalPatients: count });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch patient stats", error: error.message });
-  }
-};
-
 exports.getPatients = async (req, res) => {
   try {
-    const patients = await Patient.find().sort({ created_at: -1 });
-    res.json(patients);
+    const [patients, totalPatients] = await Promise.all([
+      Patient.find().sort({ created_at: -1 }),
+      Patient.countDocuments()
+    ]);
+
+    res.json({ totalPatients, patients });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch patients", error: error.message });
   }
@@ -38,7 +33,7 @@ exports.updatePatient = async (req, res) => {
     const { id } = req.params;
 
     const updatedPatient = await Patient.findByIdAndUpdate(id, req.body, {
-      new: true, // return updated document
+      new: true,
       runValidators: true,
     });
 
