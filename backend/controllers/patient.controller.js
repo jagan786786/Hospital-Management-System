@@ -26,7 +26,7 @@ exports.getPatientStats = async (req, res) => {
 
 exports.getPatients = async (req, res) => {
   try {
-    const patients = await Patient.find().sort({ created_at: -1 });
+    const patients = await Patient.find().sort({ createdAt: -1 });
     res.json(patients);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch patients", error: error.message });
@@ -38,7 +38,7 @@ exports.updatePatient = async (req, res) => {
     const { id } = req.params;
 
     const updatedPatient = await Patient.findByIdAndUpdate(id, req.body, {
-      new: true, // return updated document
+      new: true,
       runValidators: true,
     });
 
