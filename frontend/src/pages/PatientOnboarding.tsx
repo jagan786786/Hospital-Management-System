@@ -44,7 +44,7 @@ export default function PatientOnboarding() {
   // 🔹 Fetch patients + stats from backend
   const fetchPatientStats = async () => {
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const res = await fetch(`${BASE_URL}/getPatients`);
       const data = await res.json();
       setTotalPatients(data.totalPatients || 0);
     } catch (error) {
@@ -69,7 +69,7 @@ export default function PatientOnboarding() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${BASE_URL}`, {
+      const res = await fetch(`${BASE_URL}/createPatient`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

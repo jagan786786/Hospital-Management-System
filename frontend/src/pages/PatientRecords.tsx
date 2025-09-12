@@ -44,8 +44,7 @@ interface PatientRecord {
   updated_at: string;
 }
 
-const BASE_URL = "http://localhost:4000/api/patients"; // ✅ Express backend
-
+const BASE_URL = "http://localhost:4000/api/patients"; 
 export default function PatientRecords() {
   const [searchTerm, setSearchTerm] = useState("");
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
@@ -58,7 +57,7 @@ export default function PatientRecords() {
   const fetchPatients = async () => {
   try {
     setIsLoading(true);
-    const res = await fetch(BASE_URL);
+    const res = await fetch(`${BASE_URL}/getPatients`);
     if (!res.ok) throw new Error("Failed to fetch patients");
     const data = await res.json();
     setPatientRecords(data.patients || []);

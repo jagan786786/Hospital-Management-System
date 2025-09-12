@@ -22,7 +22,6 @@ const employeeSchema = new mongoose.Schema({
   specialization: { type: String, default: null },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
-
   password_hash: { type: String, required: true }
 });
 
