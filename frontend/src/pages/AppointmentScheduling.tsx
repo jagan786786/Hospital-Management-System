@@ -215,7 +215,6 @@ export default function AppointmentScheduling() {
       { value: 'others', label: 'Others' }
     ];
 
-    // Add follow-up if patient visited within 7 days
     if (lastVisitDate) {
       const lastVisit = new Date(lastVisitDate);
       const today = new Date();
@@ -229,7 +228,6 @@ export default function AppointmentScheduling() {
       }
     }
 
-    // Add first-time visit if no previous appointments exist
     if (!lastVisitDate) {
       types.unshift({ value: 'first-time-visit', label: 'First time visit' });
       console.log('AppointmentScheduling: Added first-time visit option');
@@ -263,7 +261,6 @@ export default function AppointmentScheduling() {
         variant: "default"
       });
 
-      // Invalidate cache to refresh data
       cache.invalidate('patient-records');
       cache.invalidate('patients');
       
