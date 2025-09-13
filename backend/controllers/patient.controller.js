@@ -1,6 +1,6 @@
 const Patient = require("../models/patient.model");
 
-exports.createPatient = async (req, res) => {
+exports.regsiterPatient = async (req, res) => {
   try {
     const { first_name, last_name } = req.body;
 
@@ -12,15 +12,6 @@ exports.createPatient = async (req, res) => {
     res.status(201).json({ message: "Patient registered successfully!", patient: newPatient });
   } catch (error) {
     res.status(500).json({ message: "Failed to register patient", error: error.message });
-  }
-};
-
-exports.getPatientStats = async (req, res) => {
-  try {
-    const count = await Patient.countDocuments();
-    res.json({ totalPatients: count });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch patient stats", error: error.message });
   }
 };
 
@@ -49,5 +40,21 @@ exports.updatePatient = async (req, res) => {
     res.json({ message: "Patient updated successfully!", patient: updatedPatient });
   } catch (error) {
     res.status(500).json({ message: "Failed to update patient", error: error.message });
+  }
+};
+ 
+// ✅ Fetch single patient by ID
+exports.getPatientById = async (req, res) => {
+  try {
+    const { id } = req.params; // Extract patient id from URL
+    const patient = await Patient.findById(id);
+
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.status(200).json(patient);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
