@@ -5,8 +5,27 @@ const express = require("express");
 const router = express.Router();
 const patientController = require("../controllers/patient.controller");
 
+
+
+
+
+// ✅ Route to get patient by ID
+router.get('/:id',
+  
+  /* 
+     #swagger.tags = ['Patients']
+     #swagger.summary = 'Get Patient by id'
+     #swagger.responses[200] = { description: "Returns total patient details" }
+  */
+  
+  
+  patientController.getPatientById);
+ 
+
+
+
 /* #swagger.tags = ['Patients'] */
-router.post("/", 
+router.post("/regsiterPatient", 
    /* 
     #swagger.tags = ['Patients']
     #swagger.summary = 'Register a new patient'
@@ -31,21 +50,15 @@ router.post("/",
       }
     }
   */
-  patientController.createPatient
+  patientController.regsiterPatient
 );
 
+
 /* #swagger.tags = ['Patients'] */
-router.get("/stats", 
+router.get("/getPatients", 
   /* 
-     #swagger.summary = 'Get total patient statistics'
-     #swagger.responses[200] = { description: "Returns total patient count" }
-  */
-  patientController.getPatientStats
-);
-
-/* #swagger.tags = ['Patients'] */
-router.get("/", 
-  /* #swagger.summary = 'Get all patients'
+     #swagger.tags = ['Patients']
+     #swagger.summary = 'Get all patients'
      #swagger.responses[200] = { description: "Returns list of patients" }
   */
   patientController.getPatients

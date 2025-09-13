@@ -21,75 +21,35 @@
         }
       }
     },
-    "/api/patients/": {
-      "post": {
+    "/api/patients/{id}": {
+      "get": {
         "tags": [
           "Patients"
         ],
-        "summary": "Register a new patient",
+        "summary": "Get Patient by id",
         "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
-          "201": {
-            "description": "Created"
+          "200": {
+            "description": "Returns total patient details"
           },
-          "400": {
-            "description": "Bad Request"
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Patient"
-              },
-              "example": {
-                "first_name": "John",
-                "last_name": "Doe",
-                "phone": "9876543210",
-                "email": "john@example.com",
-                "date_of_birth": "1990-01-01",
-                "gender": "Male",
-                "blood_group": "O+",
-                "address": "123 Main Street",
-                "medical_history": "No prior history",
-                "password": "patient123"
-              }
-            }
           }
         }
       },
-      "get": {
-        "summary": "Get all patients",
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "Returns list of patients"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/patients/stats": {
-      "get": {
-        "summary": "Get total patient statistics",
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "Returns total patient count"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/patients/{id}": {
       "put": {
         "tags": [
           "Patients"
@@ -141,7 +101,66 @@
         }
       }
     },
-    "/api/employees/": {
+    "/api/patients/regsiterPatient": {
+      "post": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Register a new patient",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patient"
+              },
+              "example": {
+                "first_name": "John",
+                "last_name": "Doe",
+                "phone": "9876543210",
+                "email": "john@example.com",
+                "date_of_birth": "1990-01-01",
+                "gender": "Male",
+                "blood_group": "O+",
+                "address": "123 Main Street",
+                "medical_history": "No prior history",
+                "password": "patient123"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/getPatients": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Get all patients",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Returns list of patients"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/employees/createEmployee": {
       "post": {
         "tags": [
           "Employees"
@@ -241,12 +260,14 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/employees/getEmployees": {
       "get": {
         "tags": [
           "Employees"
         ],
-        "summary": "Fetch all employees",
+        "summary": "Get all employees",
         "description": "",
         "responses": {
           "200": {
@@ -302,6 +323,118 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/employees/updateEmployee/{employeeId}": {
+      "put": {
+        "tags": [
+          "Employees"
+        ],
+        "summary": "UPdate employee",
+        "description": "",
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "201": {
+            "description": "Employee created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "first_name",
+                  "last_name",
+                  "email",
+                  "phone",
+                  "employee_type"
+                ],
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "employee_type": {
+                    "type": "string",
+                    "enum": [
+                      "Nurse",
+                      "Receptionist",
+                      "Doctor",
+                      "Admin",
+                      "Accountant",
+                      "House Help",
+                      "Floor Warden"
+                    ]
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "salary": {
+                    "type": "number"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "emergency_contact_name": {
+                    "type": "string"
+                  },
+                  "emergency_contact_phone": {
+                    "type": "string"
+                  },
+                  "date_of_joining": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              },
+              "example": {
+                "first_name": "Jane",
+                "last_name": "Smith",
+                "email": "jane.smith@example.com",
+                "phone": "9876543210",
+                "employee_type": "Doctor",
+                "department": "Cardiology",
+                "salary": 50000,
+                "address": "123 Hospital Road",
+                "emergency_contact_name": "John Smith",
+                "emergency_contact_phone": "9876501234",
+                "date_of_joining": "2023-05-12"
+              }
+            }
           }
         }
       }
