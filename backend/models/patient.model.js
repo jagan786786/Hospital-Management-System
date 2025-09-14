@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const { comparePassword } = require("../utils/hash");
 
 const patientSchema = new mongoose.Schema(
   {
@@ -12,25 +12,27 @@ const patientSchema = new mongoose.Schema(
     blood_group: { type: String, default: null },
     address: { type: String, default: null },
     medical_history: { type: String, default: null },
-    password: { type: String, default: "patient123", required: true },
+    password: { type: String, required: true },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );
 
-patientSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // only hash if password is new/modified
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
+// Hide password
+patientSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    delete ret.password;
+    return ret;
+  },
+});
+patientSchema.set("toObject", {
+  transform: (doc, ret) => {
+    delete ret.password;
+    return ret;
+  },
 });
 
-patientSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+patientSchema.methods.comparePassword = function (plain) {
+  return comparePassword(plain, this.password);
 };
 
 module.exports = mongoose.model("Patient", patientSchema);

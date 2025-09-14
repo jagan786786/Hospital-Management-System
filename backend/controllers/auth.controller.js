@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Employee = require("../models/employee.model");
 const Patient = require("../models/patient.model");
 const RefreshToken = require("../models/refreshToken.model");
+const { comparePassword } = require("../utils/hash");
 
 const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_SECRET, {
@@ -30,23 +31,24 @@ const generateRefreshToken = async (payload) => {
 };
 
 // LOGIN
+// LOGIN (without userType)
 exports.login = async (req, res) => {
-  const { email, password, userType } = req.body;
+  const { email, password } = req.body;
 
   try {
-    let user, role;
+    let user, role, userType;
 
-    if (userType === "employee") {
-      user = await Employee.findOne({ email });
-      if (!user)
-        return res.status(401).json({ message: "Invalid credentials" });
-
-      const valid = await bcrypt.compare(password, user.password_hash);
+    // First try Employee
+    user = await Employee.findOne({ email });
+    if (user) {
+      const valid = await comparePassword(password, user.password_hash);
       if (!valid)
         return res.status(401).json({ message: "Invalid credentials" });
 
-      role = user.employee_type; // Nurse, Doctor, etc.
-    } else if (userType === "patient") {
+      role = user.employee_type;
+      userType = "employee";
+    } else {
+      // Try Patient
       user = await Patient.findOne({ email });
       if (!user)
         return res.status(401).json({ message: "Invalid credentials" });
@@ -56,15 +58,15 @@ exports.login = async (req, res) => {
         return res.status(401).json({ message: "Invalid credentials" });
 
       role = "Patient";
-    } else {
-      return res.status(400).json({ message: "Invalid user type" });
+      userType = "patient";
     }
 
+    // Generate tokens
     const payload = { id: user._id, role, type: userType };
     const accessToken = generateAccessToken(payload);
     const refreshToken = await generateRefreshToken(payload);
 
-    res.json({ accessToken, refreshToken, role, userType });
+    res.json({ accessToken, refreshToken, role });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

@@ -18,7 +18,6 @@ const API_URL = "http://localhost:4000/api"; // Replace with your backend URL
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("employee");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -55,23 +54,22 @@ const LoginForm = () => {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email,
         password,
-        userType,
       });
 
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, role } = response.data;
 
       // Store tokens
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("userType", userType);
+      localStorage.setItem("role",role);
 
       toast({
         title: "Login successful!",
         description: "Welcome back!",
       });
 
-      // Redirect based on user type
-      if (userType === "employee") {
+      // Redirect based on role
+      if (role && role.toLowerCase() !== "patient") {
         window.location.href = "/employee-onboarding";
       } else {
         window.location.href = "/patient-onboarding";
@@ -89,12 +87,10 @@ const LoginForm = () => {
   const handleRefreshToken = async () => {
     try {
       const refreshToken = localStorage.getItem("refreshToken");
-      const userType = localStorage.getItem("userType") || "employee";
       if (!refreshToken) return;
 
       const response = await axios.post(`${API_URL}/auth/refresh`, {
-        refreshToken,
-        userType,
+        token: refreshToken,
       });
 
       localStorage.setItem("accessToken", response.data.accessToken);
@@ -102,7 +98,6 @@ const LoginForm = () => {
       console.error("Refresh token failed", err);
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userType");
     }
   };
 
@@ -224,38 +219,6 @@ const LoginForm = () => {
 
           <CardContent className="relative space-y-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* User Type Selection */}
-              <div className="space-y-3">
-                <Label
-                  htmlFor="userType"
-                  className="text-sm font-semibold text-gray-700"
-                >
-                  Login as
-                </Label>
-                <div className="relative group">
-                  <select
-                    id="userType"
-                    value={userType}
-                    onChange={(e) => setUserType(e.target.value)}
-                    className="w-full h-14 px-4 rounded-xl border-2 border-gray-200 bg-white/70 backdrop-blur-sm transition-all duration-300 text-gray-700 font-medium hover:border-gray-400 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
-                    style={{
-                      focusBorderColor: "rgba(59, 130, 246, 0.5)",
-                      focusRingColor: "rgba(59, 130, 246, 0.2)",
-                    }}
-                    disabled={isLoading}
-                  >
-                    <option value="employee">👨‍💼 Employee</option>
-                    <option value="patient">🏥 Patient</option>
-                  </select>
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: "rgba(59, 130, 246, 0.5)" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
               {/* Email Field */}
               <div className="space-y-3">
                 <Label
@@ -326,7 +289,10 @@ const LoginForm = () => {
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (errors.password)
-                        setErrors((prev) => ({ ...prev, password: undefined }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          password: undefined,
+                        }));
                     }}
                     className={`pl-12 pr-12 h-14 rounded-xl border-2 bg-white/70 backdrop-blur-sm font-medium text-gray-700 placeholder:text-gray-400 transition-all duration-300 hover:shadow-md focus:shadow-lg ${
                       errors.password
@@ -405,7 +371,7 @@ const LoginForm = () => {
         </Card>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes spin-slow {
           from {
             transform: rotate(0deg);
