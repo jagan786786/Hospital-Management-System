@@ -11,20 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, User, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 
-const API_URL = "http://localhost:4000/api"; // Replace with your backend URL
+const API_URL = "http://localhost:4000/api";
 
 const LoginForm = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{
+    identifier?: string;
+    password?: string;
+  }>({});
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
+  const { login } = useAuth();
 
   // Track mouse position for interactive effects
   useEffect(() => {
@@ -36,10 +39,18 @@ const LoginForm = () => {
   }, []);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { identifier?: string; password?: string } = {};
 
-    if (!email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Invalid email";
+    if (!identifier) {
+      newErrors.identifier = "Email or phone number is required";
+    } else {
+      // Check if it's either a valid email OR phone number
+      const emailRegex = /\S+@\S+\.\S+/;
+      const phoneRegex = /^\d{7,15}$/; // 7–15 digit phone
+      if (!emailRegex.test(identifier) && !phoneRegex.test(identifier)) {
+        newErrors.identifier = "Enter a valid email or phone number";
+      }
+    }
 
     if (!password) newErrors.password = "Password is required";
     else if (password.length < 6)
@@ -52,23 +63,21 @@ const LoginForm = () => {
   const handleLogin = async () => {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
+        identifier,
         password,
       });
 
       const { accessToken, refreshToken, role } = response.data;
 
-      // Store tokens
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("role",role);
+      // Update context + storage
+      login(accessToken, refreshToken, role);
 
       toast({
         title: "Login successful!",
         description: "Welcome back!",
       });
 
-      // Redirect based on role
+      // Redirect
       if (role && role.toLowerCase() !== "patient") {
         window.location.href = "/employee-onboarding";
       } else {
@@ -219,13 +228,13 @@ const LoginForm = () => {
 
           <CardContent className="relative space-y-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email Field */}
+              {/* Identifier Field */}
               <div className="space-y-3">
                 <Label
-                  htmlFor="email"
+                  htmlFor="identifier"
                   className="text-sm font-semibold text-gray-700"
                 >
-                  Email address
+                  Email or Phone
                 </Label>
                 <div className="relative group">
                   <Mail
@@ -233,22 +242,25 @@ const LoginForm = () => {
                     style={{ color: "rgba(59, 130, 246, 0.7)" }}
                   />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
+                    id="identifier"
+                    type="text"
+                    placeholder="Enter your email or phone number"
+                    value={identifier}
                     onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email)
-                        setErrors((prev) => ({ ...prev, email: undefined }));
+                      setIdentifier(e.target.value);
+                      if (errors.identifier)
+                        setErrors((prev) => ({
+                          ...prev,
+                          identifier: undefined,
+                        }));
                     }}
                     className={`pl-12 h-14 rounded-xl border-2 bg-white/70 backdrop-blur-sm font-medium text-gray-700 placeholder:text-gray-400 transition-all duration-300 hover:shadow-md focus:shadow-lg ${
-                      errors.email
+                      errors.identifier
                         ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
                         : "border-gray-200 hover:border-gray-400"
                     }`}
                     style={
-                      !errors.email
+                      !errors.identifier
                         ? ({
                             "--tw-ring-color": "rgba(59, 130, 246, 0.2)",
                           } as React.CSSProperties)
@@ -261,9 +273,9 @@ const LoginForm = () => {
                     style={{ backgroundColor: "rgba(59, 130, 246, 0.5)" }}
                   ></div>
                 </div>
-                {errors.email && (
+                {errors.identifier && (
                   <p className="text-sm text-red-500 font-medium animate-shake">
-                    {errors.email}
+                    {errors.identifier}
                   </p>
                 )}
               </div>

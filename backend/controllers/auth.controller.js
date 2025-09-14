@@ -30,16 +30,19 @@ const generateRefreshToken = async (payload) => {
   return token;
 };
 
-// LOGIN
-// LOGIN (without userType)
+// LOGIN (email or phone)
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body; 
+  // `identifier` can be email or phone
 
   try {
     let user, role, userType;
 
-    // First try Employee
-    user = await Employee.findOne({ email });
+    // First try Employee (check email or phone)
+    user = await Employee.findOne({
+      $or: [{ email: identifier }, { phone: identifier }],
+    });
+
     if (user) {
       const valid = await comparePassword(password, user.password_hash);
       if (!valid)
@@ -48,8 +51,11 @@ exports.login = async (req, res) => {
       role = user.employee_type;
       userType = "employee";
     } else {
-      // Try Patient
-      user = await Patient.findOne({ email });
+      // Try Patient (check email or phone)
+      user = await Patient.findOne({
+        $or: [{ email: identifier }, { phone: identifier }],
+      });
+
       if (!user)
         return res.status(401).json({ message: "Invalid credentials" });
 
@@ -71,6 +77,7 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 // REFRESH TOKEN
 exports.refresh = async (req, res) => {

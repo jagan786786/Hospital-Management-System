@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import medicalLogo from "@/assets/medical-logo.png";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 const API_URL = "http://localhost:4000/api"; // Replace with your backend URL
 
@@ -34,6 +35,7 @@ export function MedicalSidebar() {
   const { toast } = useToast();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+  const { logout } = useAuth();
 
   const doctorInfo = {
     name: "Dr. Sarah Mitchell",
@@ -96,38 +98,15 @@ export function MedicalSidebar() {
       ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-medical"
       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-smooth";
 
-  // ----------------------
-  // Logout Handler
-  // ----------------------
+
   const handleLogout = async () => {
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      const userType = localStorage.getItem("userType") || "employee";
-
-      // Call backend logout
-      await axios.post(`${API_URL}/auth/logout`, { refreshToken, userType });
-
-      // Clear localStorage
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userType");
-
-      toast({
-        title: "Logged out",
-        description: "You have successfully logged out",
-      });
-
-      navigate("/login");
-    } catch (err: any) {
-      console.error("Logout failed", err);
-      toast({
-        title: "Logout failed",
-        description: err.response?.data?.message || "Please try again",
-        variant: "destructive",
-      });
-    }
+    await logout();
+    navigate("/login");
+    toast({
+      title: "Logged out",
+      description: "You have successfully logged out",
+    });
   };
-
   return (
     <Sidebar
       className={`${

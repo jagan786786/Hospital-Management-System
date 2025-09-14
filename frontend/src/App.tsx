@@ -1,24 +1,26 @@
-import * as React from "react";
-import { Toaster } from "@/components/ui/toaster";
+import { MedicalSidebar } from "@/components/medical/MedicalSidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { MedicalSidebar } from "@/components/medical/MedicalSidebar";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 
+import AppointmentManagement from "./pages/AppointmentManagement";
+import AppointmentScheduling from "./pages/AppointmentScheduling";
+import EmployeeList from "./pages/EmployeeList";
+import EmployeeOnboarding from "./pages/EmployeeOnboarding";
+import LoginPage from "./pages/LoginPage";
+import MedicineStock from "./pages/MedicineStock";
+import NotFound from "./pages/NotFound";
 import PatientList from "./pages/PatientList";
-import PrescriptionPage from "./pages/PrescriptionPage";
 import PatientOnboarding from "./pages/PatientOnboarding";
 import PatientRecords from "./pages/PatientRecords";
-import AppointmentScheduling from "./pages/AppointmentScheduling";
-import AppointmentManagement from "./pages/AppointmentManagement";
-import MedicineStock from "./pages/MedicineStock";
+import PrescriptionPage from "./pages/PrescriptionPage";
 import StockReports from "./pages/StockReports";
-import EmployeeOnboarding from "./pages/EmployeeOnboarding";
-import EmployeeList from "./pages/EmployeeList";
-import NotFound from "./pages/NotFound";
-import LoginPage from "./pages/LoginPage";
+
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { AuthProvider } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -68,24 +70,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<PatientList />} />
-            <Route path="/patient/:patientId" element={<PrescriptionPage />} />
-            <Route path="/prescription" element={<PrescriptionPage />} />
-            <Route path="/patient-onboarding" element={<PatientOnboarding />} />
-            <Route path="/patient-records" element={<PatientRecords />} />
-            <Route path="/appointment-scheduling" element={<AppointmentScheduling />} />
-            <Route path="/appointments" element={<AppointmentManagement />} />
-            <Route path="/medicine-stock" element={<MedicineStock />} />
-            <Route path="/stock-reports" element={<StockReports />} />
-            <Route path="/employee-onboarding" element={<EmployeeOnboarding />} />
-            <Route path="/employees" element={<EmployeeList />} />
-            <Route path="/login" element={<LoginPage />} />
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <AuthProvider>
+          <Layout>
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<LoginPage />} />
+
+              {/* Protected */}
+              <Route path="/" element={<ProtectedRoute><PatientList /></ProtectedRoute>} />
+              <Route path="/patient/:patientId" element={<ProtectedRoute><PrescriptionPage /></ProtectedRoute>} />
+              <Route path="/prescription" element={<ProtectedRoute><PrescriptionPage /></ProtectedRoute>} />
+              <Route path="/patient-onboarding" element={<ProtectedRoute><PatientOnboarding /></ProtectedRoute>} />
+              <Route path="/patient-records" element={<ProtectedRoute><PatientRecords /></ProtectedRoute>} />
+              <Route path="/appointment-scheduling" element={<ProtectedRoute><AppointmentScheduling /></ProtectedRoute>} />
+              <Route path="/appointments" element={<ProtectedRoute><AppointmentManagement /></ProtectedRoute>} />
+              <Route path="/medicine-stock" element={<ProtectedRoute><MedicineStock /></ProtectedRoute>} />
+              <Route path="/stock-reports" element={<ProtectedRoute><StockReports /></ProtectedRoute>} />
+              <Route path="/employee-onboarding" element={<ProtectedRoute><EmployeeOnboarding /></ProtectedRoute>} />
+              <Route path="/employees" element={<ProtectedRoute><EmployeeList /></ProtectedRoute>} />
+
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

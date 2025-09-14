@@ -1,15 +1,13 @@
-////
-
-
 const express = require("express");
 const router = express.Router();
 const patientController = require("../controllers/patient.controller");
+const authenticate = require('../middleware/auth.middleware'); 
 
-router.post("/createPatient", patientController.createPatient);
-router.get("/getPatients", patientController.getPatients);
-router.put("/updatePatient/:id", patientController.updatePatient);
+// router.post("/createPatient", patientController.createPatient);
+// router.get("/getPatients", patientController.getPatients);
+// router.put("/updatePatient/:id", patientController.updatePatient);
 /* #swagger.tags = ['Patients'] */
-router.post("/", 
+router.post("/createPatient",authenticate,
    /* 
     #swagger.tags = ['Patients']
     #swagger.summary = 'Register a new patient'
@@ -39,7 +37,7 @@ router.post("/",
 
 
 /* #swagger.tags = ['Patients'] */
-router.get("/", 
+router.get("/getPatients",authenticate,
   /* #swagger.summary = 'Get all patients'
      #swagger.responses[200] = { description: "Returns list of patients" }
   */
@@ -47,7 +45,7 @@ router.get("/",
 );
 
 /* #swagger.tags = ['Patients'] */
-router.put("/:id", 
+router.put("/updatePatient/:id",authenticate,
    /* 
     #swagger.tags = ['Patients']
     #swagger.summary = 'Update patient details'
