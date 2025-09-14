@@ -8,11 +8,6 @@ const connectToDb = require('./db/db');
 const patientRoutes = require("./routes/patient.routes");
 const employeeRoutes = require('./routes/employee.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
-const inventoryRoutes = require('./routes/inventory.routes');
-const prescriptionRoutes = require('./routes/prescription.routes');
-
-
-
 const swaggerUi = require('swagger-ui-express');
 const swaggerFile = require('./swagger-output.json'); // generated file
 
@@ -34,8 +29,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.use("/api/patients", patientRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
 
 module.exports = app;
 
