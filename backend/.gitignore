@@ -24,3 +24,8 @@ build/
 .vscode/
 .idea/
 *.swp
+*.env
+
+# JS file
+
+testenv.js

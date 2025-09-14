@@ -438,6 +438,187 @@
           }
         }
       }
+    },
+    "/api/appointments/createAppointment/": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Create a new appointment",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Appointment created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Appointment"
+              },
+              "example": {
+                "patient": "64a123456789abcdef123456",
+                "doctor": "64a987654321abcdef987654",
+                "visit_date": "2023-09-15",
+                "visit_time": "10:30 AM",
+                "visit_type": "Consultation",
+                "doctor_department": "Cardiology",
+                "additional_notes": "Patient experiencing mild chest pain",
+                "status": "Scheduled"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/getAppointments/": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Fetch all appointments",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "List of appointments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/appointments/getAppointmentById/{id}": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Get an appointment by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Appointment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointment details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Appointment not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/appointments/updateAppointment/{id}": {
+      "put": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Update appointment details",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Appointment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointment updated successfully"
+          },
+          "404": {
+            "description": "Appointment not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Appointment"
+              },
+              "example": {
+                "status": "Completed",
+                "additional_notes": "Consultation completed successfully"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/deleteAppointment/{id}": {
+      "delete": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Delete appointment by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Appointment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointment deleted successfully"
+          },
+          "404": {
+            "description": "Appointment not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
     }
   },
   "components": {
