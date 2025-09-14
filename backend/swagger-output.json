@@ -21,6 +21,65 @@
         }
       }
     },
+    "/api/patients/regsiterPatient": {
+      "post": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Register a new patient",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Patient"
+              },
+              "example": {
+                "first_name": "John",
+                "last_name": "Doe",
+                "phone": "9876543210",
+                "email": "john@example.com",
+                "date_of_birth": "1990-01-01",
+                "gender": "Male",
+                "blood_group": "O+",
+                "address": "123 Main Street",
+                "medical_history": "No prior history",
+                "password": "patient123"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/getPatients": {
+      "get": {
+        "tags": [
+          "Patients"
+        ],
+        "summary": "Get all patients",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Returns list of patients"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/patients/{id}": {
       "get": {
         "tags": [
@@ -97,65 +156,6 @@
                 "password": "patient123"
               }
             }
-          }
-        }
-      }
-    },
-    "/api/patients/regsiterPatient": {
-      "post": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Register a new patient",
-        "description": "",
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Patient"
-              },
-              "example": {
-                "first_name": "John",
-                "last_name": "Doe",
-                "phone": "9876543210",
-                "email": "john@example.com",
-                "date_of_birth": "1990-01-01",
-                "gender": "Male",
-                "blood_group": "O+",
-                "address": "123 Main Street",
-                "medical_history": "No prior history",
-                "password": "patient123"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/patients/getPatients": {
-      "get": {
-        "tags": [
-          "Patients"
-        ],
-        "summary": "Get all patients",
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "Returns list of patients"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -613,6 +613,390 @@
           },
           "404": {
             "description": "Appointment not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/inventory/createInventory": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Create a new inventory item",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Inventory item created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Inventory"
+              },
+              "example": {
+                "brand_name": "Paracetamol",
+                "generic_name": "Acetaminophen",
+                "drug_category": "Analgesic",
+                "form": "Tablet",
+                "strength": "500mg",
+                "batch_number": "BATCH123",
+                "expiry_date": "2025-12-31",
+                "quantity_available": 100,
+                "reorder_level": 20,
+                "supplier": "MediCorp Pvt Ltd",
+                "purchase_date": "2023-09-01",
+                "purchase_price": 2.5,
+                "mrp": 5,
+                "selling_price": 4.5,
+                "tax_percent": 5,
+                "storage_conditions": "Store in a cool and dry place",
+                "cold_chain_required": false,
+                "prescription_required": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/getInventories": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Fetch all inventory items",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "List of inventory items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Inventory"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/inventory/getInventoryById/{id}": {
+      "get": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Get inventory item by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inventory ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Inventory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inventory not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/inventory/updateInventory/{id}": {
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Update an inventory item",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inventory ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory item updated successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Inventory not found"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Inventory"
+              },
+              "example": {
+                "quantity_available": 80,
+                "reason_for_adjustment": "Dispensed to patients"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/deleteInventory/{id}": {
+      "delete": {
+        "tags": [
+          "Inventory"
+        ],
+        "summary": "Delete an inventory item",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Inventory ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory item deleted successfully"
+          },
+          "404": {
+            "description": "Inventory not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/createPrescription": {
+      "post": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Create a new prescription",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Prescription created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prescription"
+              },
+              "example": {
+                "appointment_id": "64a123456789abcdef123456",
+                "patient_id": "64a654321987abcdef123123",
+                "doctor_id": "64a789456321abcdef654321",
+                "visit_date": "2023-09-15",
+                "blood_pressure": "120/80",
+                "pulse": "72",
+                "height": "175 cm",
+                "weight": "70 kg",
+                "bmi": "22.8",
+                "spo2": "98%",
+                "complaints": "Headache and fatigue",
+                "medicines": [
+                  {
+                    "name": "Paracetamol",
+                    "dosage": "500mg",
+                    "duration": "5 days"
+                  }
+                ],
+                "advice": "Drink plenty of water",
+                "tests_prescribed": "Blood Test",
+                "next_visit": "2023-09-22",
+                "doctor_notes": "Patient advised to rest",
+                "status": "Draft"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prescriptions/getPrescriptions": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Fetch all prescriptions",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "List of prescriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prescription"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/getPrescriptionById/{id}": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Get prescription by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prescription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/updatePrescription/{id}": {
+      "put": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Update a prescription",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prescription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription updated successfully"
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prescription"
+              },
+              "example": {
+                "status": "Completed",
+                "doctor_notes": "Patient recovered"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/prescriptions/deletePrescription/{id}": {
+      "delete": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Delete prescription",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prescription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription deleted successfully"
+          },
+          "404": {
+            "description": "Prescription not found"
           },
           "500": {
             "description": "Internal Server Error"

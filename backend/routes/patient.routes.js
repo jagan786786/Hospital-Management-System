@@ -1,27 +1,6 @@
-////
-
-
 const express = require("express");
 const router = express.Router();
 const patientController = require("../controllers/patient.controller");
-
-
-
-
-
-// ✅ Route to get patient by ID
-router.get('/:id',
-  
-  /* 
-     #swagger.tags = ['Patients']
-     #swagger.summary = 'Get Patient by id'
-     #swagger.responses[200] = { description: "Returns total patient details" }
-  */
-  
-  
-  patientController.getPatientById);
- 
-
 
 
 /* #swagger.tags = ['Patients'] */
@@ -63,6 +42,18 @@ router.get("/getPatients",
   */
   patientController.getPatients
 );
+
+
+// ✅ Route to get patient by ID
+router.get('/:id',
+  /* 
+     #swagger.tags = ['Patients']
+     #swagger.summary = 'Get Patient by id'
+     #swagger.responses[200] = { description: "Returns total patient details" }
+  */
+  patientController.getPatientById
+);
+
 
 /* #swagger.tags = ['Patients'] */
 router.put("/:id", 
