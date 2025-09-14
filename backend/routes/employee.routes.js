@@ -2,11 +2,13 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const employeeController = require('../controllers/employee.controller');
+const authenticate = require('../middleware/auth.middleware'); 
+
 
 const allowedTypes = ["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"];
 
 router.post(
-  '/createEmployee',
+  '/createEmployee',authenticate,
   [
     body('first_name').isString().isLength({ min: 2 }),
     body('last_name').isString().isLength({ min: 2 }),
@@ -69,9 +71,9 @@ router.post(
   employeeController.createEmployee
 );
 
-router.put('/updateEmployee/:employeeId', employeeController.updateEmployee);
-router.delete('/deleteEmployee/:employeeId', employeeController.deleteEmployee);
-router.get('/',  
+router.put('/updateEmployee/:employeeId',authenticate, employeeController.updateEmployee);
+router.delete('/deleteEmployee/:employeeId',authenticate, employeeController.deleteEmployee);
+router.get('/getEmployees',authenticate,
   
   /* 
     #swagger.tags = ['Employees']
@@ -88,7 +90,7 @@ router.get('/',
       }
     }
   */ employeeController.getEmployees);
-router.get('/:employeeId',
+router.get('/getEmployees/:employeeId',authenticate,
    /* 
     #swagger.tags = ['Employees']
     #swagger.summary = 'Get employee by ID'

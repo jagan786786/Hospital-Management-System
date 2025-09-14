@@ -89,7 +89,7 @@ export default function EmployeeOnboarding() {
   const onSubmit = async (data: EmployeeFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch(BASE_URL, {
+      const response = await fetch(`${BASE_URL}/createEmployee`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
