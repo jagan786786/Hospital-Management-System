@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import AppointmentManagement from "./pages/AppointmentManagement";
 import AppointmentScheduling from "./pages/AppointmentScheduling";
@@ -18,8 +18,8 @@ import PatientOnboarding from "./pages/PatientOnboarding";
 import PatientRecords from "./pages/PatientRecords";
 import PrescriptionPage from "./pages/PrescriptionPage";
 import StockReports from "./pages/StockReports";
-import NotAuthenticated from "./components/NotAuthenticated";
 
+import NotAuthenticated from "./components/NotAuthenticated";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -40,7 +40,6 @@ const Layout = ({ children }) => {
     );
   }
 
-  // Default layout with sidebar + header
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -49,7 +48,7 @@ const Layout = ({ children }) => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
-          {/* Header with sidebar trigger */}
+          {/* Header */}
           <header className="h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center px-4">
             <SidebarTrigger className="mr-4" />
             <div className="flex-1">
@@ -76,6 +75,7 @@ const App = () => (
             <Routes>
               {/* Public */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/unauthorized" element={<NotAuthenticated />} />
 
               {/* Protected */}
               <Route
@@ -169,7 +169,6 @@ const App = () => (
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
-              <Route path="/unauthorized" element={<NotAuthenticated />} />
             </Routes>
           </Layout>
         </AuthProvider>
