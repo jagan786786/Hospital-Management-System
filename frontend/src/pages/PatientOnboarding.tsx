@@ -33,6 +33,7 @@ export default function PatientOnboarding() {
     bloodGroup: "",
     address: "",
     medicalHistory: "",
+    password: "",
   });
   const [totalPatients, setTotalPatients] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +45,11 @@ export default function PatientOnboarding() {
   // 🔹 Fetch total patients from backend
   const fetchPatientStats = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/stats`);
+      const res = await fetch(`${BASE_URL}/getPatients`);
       const data = await res.json();
-      setTotalPatients(data.totalPatients || 0);
+      setTotalPatients(Array.isArray(data) ? data.length : 0);
     } catch (error) {
-      console.error("Failed to fetch stats:", error);
+      console.error("Failed to fetch patients:", error);
     }
   };
 
@@ -69,7 +70,7 @@ export default function PatientOnboarding() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${BASE_URL}`, {
+      const res = await fetch(`${BASE_URL}/regsiterPatient`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,6 +83,7 @@ export default function PatientOnboarding() {
           blood_group: formData.bloodGroup,
           address: formData.address,
           medical_history: formData.medicalHistory,
+          password: formData.password || "patient123", // default password if not entered
         }),
       });
 
@@ -106,6 +108,7 @@ export default function PatientOnboarding() {
         bloodGroup: "",
         address: "",
         medicalHistory: "",
+        password: "",
       });
 
       // Refresh stats
@@ -120,10 +123,9 @@ export default function PatientOnboarding() {
         description: message,
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
-    }finally {
-    setIsSubmitting(false);
-  }
+    }
   };
 
   return (
@@ -276,9 +278,9 @@ export default function PatientOnboarding() {
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -294,14 +296,14 @@ export default function PatientOnboarding() {
                   <SelectValue placeholder="Select blood group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="a+">A+</SelectItem>
-                  <SelectItem value="a-">A-</SelectItem>
-                  <SelectItem value="b+">B+</SelectItem>
-                  <SelectItem value="b-">B-</SelectItem>
-                  <SelectItem value="ab+">AB+</SelectItem>
-                  <SelectItem value="ab-">AB-</SelectItem>
-                  <SelectItem value="o+">O+</SelectItem>
-                  <SelectItem value="o-">O-</SelectItem>
+                  <SelectItem value="O+">O+</SelectItem>
+                  <SelectItem value="O-">O-</SelectItem>
+                  <SelectItem value="A+">A+</SelectItem>
+                  <SelectItem value="A-">A-</SelectItem>
+                  <SelectItem value="B+">B+</SelectItem>
+                  <SelectItem value="B-">B-</SelectItem>
+                  <SelectItem value="AB+">AB+</SelectItem>
+                  <SelectItem value="AB-">AB-</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -333,6 +335,18 @@ export default function PatientOnboarding() {
               onChange={(e) =>
                 handleInputChange("medicalHistory", e.target.value)
               }
+            />
+          </div>
+
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
             />
           </div>
 
