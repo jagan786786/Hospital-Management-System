@@ -16,16 +16,16 @@ const generateRefreshToken = async (payload) => {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
   });
 
-  // calculate exact expiry date
+  // calculate exact expiry date (30 days for example)
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30); // 30 days, same as REFRESH_TOKEN_EXPIRES_IN
+  expiresAt.setDate(expiresAt.getDate() + 30);
 
-  await RefreshToken.create({
-    userId: payload.id,
-    userType: payload.type, // employee / patient
-    token,
-    expiresAt,
-  });
+  // update existing token if user already has one, otherwise create new
+  await RefreshToken.findOneAndUpdate(
+    { userId: payload.id, userType: payload.type }, // match existing record
+    { token, expiresAt, createdAt: new Date() }, // new values
+    { upsert: true, new: true } // create if not exists
+  );
 
   return token;
 };
