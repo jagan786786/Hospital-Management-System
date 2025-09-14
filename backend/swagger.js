@@ -1,13 +1,14 @@
-const swaggerAutogen = require('swagger-autogen')({ openapi: '3.0.0' });
-
-
 const doc = {
   info: {
     title: "Hospital Management API",
     description: "API documentation for Patient Management"
   },
-  host: "localhost:4000",
-  schemes: ["http"],
+  servers: [
+    {
+      url: "http://localhost:4000", // ✅ correct OpenAPI v3 format
+      description: "Local server"
+    }
+  ],
   components: {
     schemas: {
       Patient: {
@@ -26,32 +27,27 @@ const doc = {
           updatedAt: { type: "string", format: "date-time" }
         },
         required: ["first_name", "last_name"]
-      } , 
+      },
       Employee: {
-  type: "object",
-  properties: {
-    _id: { type: "string" },
-    first_name: { type: "string" },
-    last_name: { type: "string" },
-    email: { type: "string" },
-    phone: { type: "string" },
-    employee_type: { type: "string" },
-    department: { type: "string" },
-    salary: { type: "number" },
-    address: { type: "string" },
-    emergency_contact_name: { type: "string" },
-    emergency_contact_phone: { type: "string" },
-    date_of_joining: { type: "string", format: "date" },
-    createdAt: { type: "string", format: "date-time" },
-    updatedAt: { type: "string", format: "date-time" }
-  },
-  required: ["first_name", "last_name", "email", "phone", "employee_type"]
-}
+        type: "object",
+        properties: {
+          _id: { type: "string" },
+          first_name: { type: "string" },
+          last_name: { type: "string" },
+          email: { type: "string" },
+          phone: { type: "string" },
+          employee_type: { type: "string" },
+          department: { type: "string" },
+          salary: { type: "number" },
+          address: { type: "string" },
+          emergency_contact_name: { type: "string" },
+          emergency_contact_phone: { type: "string" },
+          date_of_joining: { type: "string", format: "date" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" }
+        },
+        required: ["first_name", "last_name", "email", "phone", "employee_type"]
+      }
     }
   }
 };
-
-const outputFile = "./swagger-output.json";
-const endpointsFiles = ['./app.js'];  // ✅ instead of just patient.routes.js
-
-swaggerAutogen(outputFile, endpointsFiles, doc);
