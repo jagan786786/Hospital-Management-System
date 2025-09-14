@@ -4,26 +4,35 @@ const Employee = require('../models/employee.model');
 const Appointment = require("../models/appointment.model");
 
 
-
 // ✅ Create Prescription
 exports.createPrescription = async (req, res) => {
   try {
-    const { patient, doctor, appointment_id, ...otherFields } = req.body;
+    const { patient_id, doctor_id, appointment_id, ...otherFields } = req.body;
+
+    console.log(patient_id, doctor_id, appointment_id); // ✅ Correct variables
 
     // validate patient
-    const existingPatient = await Patient.findById(patient);
-    if (!existingPatient) return res.status(400).json({ message: "Patient not found" });
+    const existingPatient = await Patient.findById(patient_id);
+    if (!existingPatient) {
+      return res.status(400).json({ message: "Patient not found" });
+    }
 
     // validate doctor
-    const existingDoctor = await Employee.findById(doctor);
+    const existingDoctor = await Employee.findById(doctor_id);
     if (!existingDoctor || existingDoctor.employee_type !== "Doctor") {
       return res.status(400).json({ message: "Invalid doctor" });
     }
 
+    // validate appointment
+    const existingAppointment = await Appointment.findById(appointment_id);
+    if (!existingAppointment) {
+      return res.status(400).json({ message: "Appointment not found" });
+    }
+
     // save prescription
     const prescription = new Prescription({
-      patient_id: patient,
-      doctor_id: doctor,
+      patient_id,
+      doctor_id,
       appointment_id,
       ...otherFields
     });
@@ -31,17 +40,20 @@ exports.createPrescription = async (req, res) => {
     await prescription.save();
     res.status(201).json(prescription);
   } catch (error) {
-    res.status(500).json({ message: "Error creating prescription", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating prescription", error: error.message });
   }
 };
+
 
 
 // ✅ Get all prescriptions
 exports.getPrescriptions = async (req, res) => {
   try {
     const prescriptions = await Prescription.find()
-      .populate("patient", "first_name last_name phone")
-      .populate("doctor", "first_name last_name department employee_type");
+      .populate("patient_id", "first_name last_name phone")
+      .populate("doctor_id", "first_name last_name department employee_type");
     res.status(200).json(prescriptions);
   } catch (error) {
     res.status(500).json({ message: "Error fetching prescriptions", error: error.message });
