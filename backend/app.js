@@ -9,6 +9,7 @@ const patientRoutes = require("./routes/patient.routes");
 const employeeRoutes = require('./routes/employee.routes');
 const appointmentRoutes = require('./routes/appointment.routes');
 const inventoryRoutes = require('./routes/inventory.routes');
+const authRoutes = require('./routes/auth.routes');
 const prescriptionRoutes = require('./routes/prescription.routes');
 
 
@@ -36,6 +37,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/auth', authRoutes);
 
 module.exports = app;
 
