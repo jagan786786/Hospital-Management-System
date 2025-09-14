@@ -13,6 +13,7 @@ import EmployeeOnboarding from "./pages/EmployeeOnboarding";
 import LoginPage from "./pages/LoginPage";
 import MedicineStock from "./pages/MedicineStock";
 import NotFound from "./pages/NotFound";
+
 import PatientList from "./pages/PatientList";
 import PatientOnboarding from "./pages/PatientOnboarding";
 import PatientRecords from "./pages/PatientRecords";
@@ -30,6 +31,7 @@ const Layout = ({ children }) => {
   const isLoginPage = location.pathname === "/login";
   const isUnauthorizedPage = location.pathname === "/unauthorized";
 
+  // Centered layout for login / unauthorized
   if (isLoginPage || isUnauthorizedPage) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
@@ -40,6 +42,7 @@ const Layout = ({ children }) => {
     );
   }
 
+  // Default layout with sidebar + header
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -48,7 +51,7 @@ const Layout = ({ children }) => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
-          {/* Header */}
+          {/* Header with sidebar trigger */}
           <header className="h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center px-4">
             <SidebarTrigger className="mr-4" />
             <div className="flex-1">
