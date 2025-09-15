@@ -7,7 +7,8 @@
   },
   "servers": [
     {
-      "url": "http://://localhost:4000/"
+      "url": "http://localhost:4000",
+      "description": "Local server"
     }
   ],
   "paths": {
@@ -1087,6 +1088,184 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/screen/createScreen": {
+      "post": {
+        "tags": [
+          "Screens"
+        ],
+        "summary": "Create a new screen",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Screen created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Screen"
+              },
+              "example": {
+                "code": "SCR01",
+                "name": "Dashboard",
+                "url": "/dashboard",
+                "icon": "dashboard-icon"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screen/getAllScreens": {
+      "get": {
+        "tags": [
+          "Screens"
+        ],
+        "summary": "Fetch all screens",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "List of screens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Screen"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/screen/getScreenById/{id}": {
+      "get": {
+        "tags": [
+          "Screens"
+        ],
+        "summary": "Get screen by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Screen ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screen details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Screen"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Screen not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/screen/updateScreen/{id}": {
+      "put": {
+        "tags": [
+          "Screens"
+        ],
+        "summary": "Update a screen",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Screen ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screen updated successfully"
+          },
+          "404": {
+            "description": "Screen not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Screen"
+              },
+              "example": {
+                "name": "Reports",
+                "url": "/reports",
+                "icon": "report-icon"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/screen/deleteScreen/{id}": {
+      "delete": {
+        "tags": [
+          "Screens"
+        ],
+        "summary": "Delete a screen",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Screen ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screen deleted successfully"
+          },
+          "404": {
+            "description": "Screen not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
