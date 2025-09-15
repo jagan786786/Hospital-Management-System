@@ -11,6 +11,13 @@ const roleSchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true }, // Role name (Admin, Doctor, etc.)
     description: { type: String, default: "" },
     permissions: [{ type: String }],
+    // ✅ Each role has multiple screens via screen `code` (enum-like string)
+    screens: [
+      {
+        type: String, // e.g., "SCRN001", "SCRN002"
+        ref: "Screen", // Reference to Screen model
+      },
+    ],
   },
   { timestamps: true }
 );
