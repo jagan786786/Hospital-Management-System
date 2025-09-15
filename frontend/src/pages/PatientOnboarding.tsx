@@ -20,9 +20,12 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { UserPlus, Users, Calendar, Phone, Mail, MapPin } from "lucide-react";
 
-const BASE_URL = "http://localhost:4000/api/patients";
+// ✅ Import patient services
+import { getPatients, registerPatient } from "@/api/services/patientService";
 
 export default function PatientOnboarding() {
+
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -35,18 +38,21 @@ export default function PatientOnboarding() {
     medicalHistory: "",
     password: "",
   });
+
+
   const [totalPatients, setTotalPatients] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   useEffect(() => {
     fetchPatientStats();
   }, []);
 
-  // 🔹 Fetch total patients from backend
+
+  // 🔹 Fetch total patients
   const fetchPatientStats = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/getPatients`);
-      const data = await res.json();
+      const data = await getPatients();
       setTotalPatients(Array.isArray(data) ? data.length : 0);
     } catch (error) {
       console.error("Failed to fetch patients:", error);
@@ -57,7 +63,7 @@ export default function PatientOnboarding() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🔹 Submit new patient to backend
+  // 🔹 Submit patient registration
   const handleSubmit = async () => {
     if (!formData.firstName || !formData.lastName) {
       toast({
@@ -70,27 +76,18 @@ export default function PatientOnboarding() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${BASE_URL}/regsiterPatient`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone,
-          email: formData.email,
-          date_of_birth: formData.dateOfBirth || null,
-          gender: formData.gender,
-          blood_group: formData.bloodGroup,
-          address: formData.address,
-          medical_history: formData.medicalHistory,
-          password: formData.password || "patient123", // default password if not entered
-        }),
+      await registerPatient({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        email: formData.email,
+        date_of_birth: formData.dateOfBirth || null,
+        gender: formData.gender,
+        blood_group: formData.bloodGroup,
+        address: formData.address,
+        medical_history: formData.medicalHistory,
+        password: formData.password || "patient123",
       });
-
-      const data = await res.json();
-
-      if (!res.ok)
-        throw new Error(data.message || "Failed to register patient");
 
       toast({
         title: "Success",
@@ -111,16 +108,11 @@ export default function PatientOnboarding() {
         password: "",
       });
 
-      // Refresh stats
       fetchPatientStats();
-    } catch (error: unknown) {
-      let message = "Something went wrong";
-      if (error instanceof Error) {
-        message = error.message;
-      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: message,
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
     } finally {
@@ -131,20 +123,7 @@ export default function PatientOnboarding() {
   return (
     <div className="flex-1 space-y-6 p-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Patient Onboarding
-          </h1>
-          <p className="text-muted-foreground">
-            Register new patients and manage their information
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Patient
-        </Button>
-      </div>
+      
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -159,7 +138,7 @@ export default function PatientOnboarding() {
             <div className="text-2xl font-bold text-primary">
               {totalPatients}
             </div>
-            <p className="text-xs text-muted-foreground">From backend</p>
+            <p className="text-xs text-muted-foreground">Regsitered Patients</p>
           </CardContent>
         </Card>
 
@@ -210,7 +189,9 @@ export default function PatientOnboarding() {
                 id="firstName"
                 placeholder="Enter first name"
                 value={formData.firstName}
-                onChange={(e) => handleInputChange("firstName", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("firstName", e.target.value)
+                }
               />
             </div>
             <div className="space-y-2">
@@ -219,7 +200,9 @@ export default function PatientOnboarding() {
                 id="lastName"
                 placeholder="Enter last name"
                 value={formData.lastName}
-                onChange={(e) => handleInputChange("lastName", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("lastName", e.target.value)
+                }
               />
             </div>
           </div>
@@ -329,7 +312,7 @@ export default function PatientOnboarding() {
             <Label htmlFor="medical-history">Medical History</Label>
             <Textarea
               id="medical-history"
-              placeholder="Enter any relevant medical history, allergies, or conditions"
+              placeholder="Enter relevant medical history"
               className="min-h-[100px]"
               value={formData.medicalHistory}
               onChange={(e) =>
@@ -337,19 +320,7 @@ export default function PatientOnboarding() {
               }
             />
           </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={(e) => handleInputChange("password", e.target.value)}
-            />
-          </div>
-
+          
           {/* Actions */}
           <div className="flex gap-4 pt-4">
             <Button
@@ -358,9 +329,6 @@ export default function PatientOnboarding() {
               disabled={isSubmitting}
             >
               {isSubmitting ? "Registering..." : "Register Patient"}
-            </Button>
-            <Button variant="outline" className="flex-1">
-              Save as Draft
             </Button>
           </div>
         </CardContent>
