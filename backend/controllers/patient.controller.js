@@ -2,10 +2,17 @@ const Patient = require("../models/patient.model");
 
 exports.regsiterPatient = async (req, res) => {
   try {
-    const { first_name, last_name } = req.body;
+    const { first_name, last_name , phone } = req.body;
 
     if (!first_name || !last_name) {
       return res.status(400).json({ message: "First and last name are required" });
+    }
+
+    // Check if phone OR email already exists
+    const existingPatient = await Patient.findOne({$or: [{ phone }]});
+
+    if (existingPatient) {
+      return res.status(400).json({ message: "Patient already registered with this phone number" });
     }
 
     const newPatient = await Patient.create(req.body);
