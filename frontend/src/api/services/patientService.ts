@@ -1,13 +1,13 @@
 import api from "../axios";
-import { Patient, AppointmentInfo } from "@/types/patient";
+import { PatientRecord, AppointmentInfo } from "@/types/patient";
 
 // Patients
-export const getPatients = async (): Promise<Patient[]> => {
+export const getPatients = async (): Promise<PatientRecord[]> => {
   const res = await api.get("/patients/getPatients");
   return res.data;
 };
 
-export const registerPatient = async (patient: Patient): Promise<Patient> => {
+export const registerPatient = async (patient: PatientRecord): Promise<PatientRecord> => {
   const res = await api.post("/patients/regsiterPatient", patient);
   return res.data;
 };
@@ -38,4 +38,27 @@ export const scheduleAppointment = async (
 
 export const deleteAppointment = async (appointmentId: string): Promise<void> => {
   await api.delete(`/appointments/deleteAppointment/${appointmentId}`);
+};
+
+
+// ✅ Get future appointments
+export const getFutureAppointments = async (): Promise<{
+  patientIds: Set<string>;
+  details: Map<string, AppointmentInfo>;
+}> => {
+  const { data } = await api.get("/appointments/future");
+
+  const patientIds = new Set<string>();
+  const details = new Map<string, AppointmentInfo>();
+
+  data.forEach((appt: any) => {
+    patientIds.add(appt.patient_id);
+    details.set(appt.patient_id, {
+      appointment_date: appt.appointment_date,
+      appointment_time: appt.appointment_time,
+      doctor_name: appt.doctor_name,
+    });
+  });
+
+  return { patientIds, details };
 };

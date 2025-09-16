@@ -380,20 +380,138 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "prescriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      role: {
+        Row: {
+          created_at: string
+          id: number
+          role_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          role_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          role_name?: string | null
+        }
+        Relationships: []
+      }
+      role_access: {
+        Row: {
+          created_at: string
+          employee_id: number | null
+          id: number
+          role_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: number | null
+          id?: number
+          role_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: number | null
+          id?: number
+          role_id?: number | null
+        }
+        Relationships: []
+      }
+      screen_permissions: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          screen_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          screen_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          screen_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_access_screen: {
+        Args: { _screen_id: string; _user_id: string }
+        Returns: boolean
+      }
+      enable_strict_security: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_employee_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "doctor"
+        | "nurse"
+        | "receptionist"
+        | "pharmacist"
+        | "hr"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -520,6 +638,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "doctor",
+        "nurse",
+        "receptionist",
+        "pharmacist",
+        "hr",
+      ],
+    },
   },
 } as const

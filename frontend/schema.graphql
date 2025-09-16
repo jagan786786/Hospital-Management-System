@@ -8,6 +8,8 @@ frontend/
 │   │
 │   ├── types/
 │   │   └── patient.d.ts             # TS interfaces for patient
+│   ├── utils/
+│   │   └── patientUtils.ts             # Utility code for patient
 │   │
 │   ├── pages/  (or components/)
 │   │   └── PatientRecords.tsx    # Your UI component (cleaned)

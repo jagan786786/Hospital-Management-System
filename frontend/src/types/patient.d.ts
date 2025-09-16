@@ -1,41 +1,40 @@
-export interface Patient {
-  _id?: string; // MongoDB id
-  id?: string;  // fallback if backend sends plain id
+// src/types/patient.ts
+export interface PatientRecord {
+  id?: string; // ✅ required
+  _id?: string; 
   first_name: string;
   last_name: string;
-  age?: number;
-  gender: string;
-  address?: string;
-  phone?: string;
   email?: string;
-  date_of_birth?: string;
-  blood_group?: string;
-  medical_history?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface PatientFormValues {
-  first_name: string;
-  last_name: string;
-  age?: number;
-  gender: string;
-  address?: string;
   phone?: string;
-  email?: string;
-  date_of_birth?: string;
+  gender?: string;
   blood_group?: string;
-  medical_history?: string;
+  date_of_birth: string;
+  address?: string;
+  created_at: string;
+  medical_history: string; // ✅ must be required
 }
 
 export interface AppointmentInfo {
-  _id: string;
-  patient: string;
-  doctor: string;
-  visit_date: string;
-  visit_time: string;
-  visit_type: string;
-  doctor_department: string;
-  additional_notes?: string;
-  status: string;
+  appointment_date: string;
+  appointment_time: string;
+  doctor_name: string;
+}
+
+
+
+export interface AgeRange {
+  min?: number;
+  max?: number;
+}
+
+export interface DateRange {
+  start?: string;
+  end?: string;
+}
+
+export interface FilterOptions {
+  gender?: string;
+  bloodGroup?: string;
+  ageRange?: AgeRange;
+  dateRange?: DateRange;
 }

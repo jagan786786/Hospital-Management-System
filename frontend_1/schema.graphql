@@ -1,0 +1,18 @@
+frontend/
+│
+├── src/
+│   ├── api/
+│   │   ├── axios.ts                 # Axios instance with baseURL
+│   │   └── services/
+│   │       └── patientService.ts    # Patient-related API functions and logics
+│   │
+│   ├── types/
+│   │   └── patient.d.ts             # TS interfaces for patient
+│   │
+│   ├── pages/  (or components/)
+│   │   └── PatientRecords.tsx    # Your UI component (cleaned)
+│   │
+│   └── ...
+│
+├── .env.local                       # Holds API base URL
+└── package.json

@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { useSortable } from "@/hooks/useSortable";
+import { usePagination } from "@/hooks/usePagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { cache } from "@/lib/cache";
 import { TableSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
 
@@ -49,6 +51,7 @@ export default function MedicineStock() {
   const [transactionQuantity, setTransactionQuantity] = useState('');
   const [transactionNotes, setTransactionNotes] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
   
   // Add Medicine dialog state
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -242,6 +245,7 @@ export default function MedicineStock() {
   );
 
   const { sortedData, requestSort, getSortIcon } = useSortable(filteredMedicines);
+  const pagination = usePagination(sortedData, pageSize);
 
   const getStatusBadge = (medicine: Medicine) => {
     const isExpired = medicine.expiry_date && new Date(medicine.expiry_date) < new Date();
@@ -493,7 +497,7 @@ export default function MedicineStock() {
                 </tr>
               </thead>
               <tbody>
-                {sortedData.map((medicine) => (
+                {pagination.paginatedData.map((medicine) => (
                   <tr key={medicine.id} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
                     <td className="py-4 px-4">
                       <div>
@@ -581,6 +585,10 @@ export default function MedicineStock() {
                 ))}
               </tbody>
             </table>
+            <TablePagination 
+              {...pagination}
+              onPageSizeChange={(size) => setPageSize(size)}
+            />
           </div>
         </CardContent>
       </Card>

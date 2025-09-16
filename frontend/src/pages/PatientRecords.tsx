@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,95 +19,108 @@ import {
   Search,
   Users,
   Activity,
-  Eye,
-  Edit,
-  Filter,
   Download,
   FileText,
   Calendar,
-  Trash,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { useSortable } from "@/hooks/useSortable";
 
-import { Patient, AppointmentInfo } from "@/types/patient";
-import {
-  getPatients,
-  getAppointments,
-  scheduleAppointment,
-  deleteAppointment,
-} from "@/api/services/patientService";
-import { calculateAge } from "@/utils/patientUtils";
+import { toast } from "@/hooks/use-toast";
+import { cache } from "@/lib/cache";
+import { useSortable } from "@/hooks/useSortable";
+import { PatientEditDialog } from "@/components/medical/PatientEditDialog";
+import { PatientHistoryDialog } from "@/components/medical/PatientHistoryDialog";
+import { PatientFilter, FilterOptions } from "@/components/medical/PatientFilter";
+import { PatientRecord, AppointmentInfo } from "@/types/patient";
+import { getPatients, getAppointments } from "@/api/services/patientService";
+import { calculateAge , filterPatients } from "@/utils/patientUtils";
+import { exportPatientsToCSV } from "@/utils/csvUtils"; 
 
 export default function PatientRecords() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [patientRecords, setPatientRecords] = useState<Patient[]>([]);
+  const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [futureAppointments, setFutureAppointments] = useState<Set<string>>(new Set());
   const [appointmentDetails, setAppointmentDetails] = useState<Map<string, AppointmentInfo>>(new Map());
+  const [filters, setFilters] = useState<FilterOptions>({});
 
-  useEffect(() => {
-    fetchPatients();
-    fetchAppointments();
-  }, []);
-
-  const fetchPatients = async () => {
+  // ---------- Fetch patients + appointments ----------
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const data = await getPatients();
-      const normalized = data.map((p) => ({ ...p, id: p.id || p._id }));
-      setPatientRecords(normalized || []);
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-      toast({ title: "Error", description: "Failed to fetch patient records", variant: "destructive" });
+      // Fetch patients with cache
+      const cachedPatients = cache.get<PatientRecord[]>("patient-records");
+      const patients = cachedPatients ?? (await getPatients());
+      if (!cachedPatients) cache.set("patient-records", patients || [], 180000);
+      setPatientRecords((patients || []).map(p => ({
+        ...p,
+        id: (p.id || p._id || "").toString().toUpperCase(),
+      })));
+      // Fetch future appointments with cache
+      const today = new Date().toISOString().split("T")[0];
+      const cacheKey = `future-appointments-${today}`;
+      const cachedAppointments = cache.get<{ patientIds: Set<string>; details: Map<string, AppointmentInfo> }>(cacheKey);
+
+      if (cachedAppointments) {
+        setFutureAppointments(cachedAppointments.patientIds);
+        setAppointmentDetails(cachedAppointments.details);
+      } else {
+        const appointmentsRaw: any[] = (await getAppointments()) || [];
+        const futureData = appointmentsRaw.filter(a => {
+          const date = a.appointment_date || a.date || "";
+          const status = a.status || "";
+          return date >= today && status.toLowerCase() === "scheduled";
+        });
+
+        const patientIds = new Set<string>(futureData.map(a => a.patient_id));
+        const details = new Map<string, AppointmentInfo>();
+        futureData.forEach(appointment => {
+          const doctorName =
+            appointment.doctor_name ||
+            appointment.doctorFullName ||
+            (appointment.doctor_first_name && appointment.doctor_last_name
+              ? `Dr. ${appointment.doctor_first_name} ${appointment.doctor_last_name}`
+              : "Unknown Doctor");
+
+          details.set(appointment.patient_id, {
+            appointment_date: appointment.appointment_date || appointment.date,
+            appointment_time: appointment.appointment_time || appointment.time,
+            doctor_name: doctorName,
+          });
+        });
+
+        cache.set(cacheKey, { patientIds, details }, 300000);
+        setFutureAppointments(patientIds);
+        setAppointmentDetails(details);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      toast({ title: "Error", description: "Failed to load patient data", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAppointments = async () => {
-    try {
-      const data = await getAppointments();
-      const today = new Date().toISOString().split("T")[0];
-      const future = data.filter(a => a.visit_date >= today && a.status.toLowerCase() === "scheduled");
-      const patientIds = new Set(future.map(a => a.patient));
-      const details = new Map<string, AppointmentInfo>();
-      future.forEach(a => details.set(a.patient, a));
-      setFutureAppointments(patientIds);
-      setAppointmentDetails(details);
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-    }
-  };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const handleSchedule = async (patientId: string) => {
-    try {
-      await scheduleAppointment(patientId);
-      toast({ title: "Success", description: "Appointment scheduled" });
-      fetchAppointments();
-    } catch {
-      toast({ title: "Error", description: "Could not schedule appointment", variant: "destructive" });
-    }
-  };
+  // ---------- Helper ----------
+  const displayAge = (dob: string) => calculateAge(dob) ?? "N/A";
 
-  const handleDelete = async (appointmentId: string) => {
-    try {
-      await deleteAppointment(appointmentId);
-      toast({ title: "Success", description: "Appointment deleted" });
-      fetchAppointments();
-    } catch {
-      toast({ title: "Error", description: "Could not delete appointment", variant: "destructive" });
-    }
-  };
-
-  const filteredPatients = patientRecords.filter(
-    p =>
-      `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ---------- Filtering ----------
+  
+  const filteredPatients = useMemo(
+  () => filterPatients(patientRecords, searchTerm, filters),
+  [patientRecords, searchTerm, filters]
+);
 
   const { sortedData, requestSort, getSortIcon } = useSortable(filteredPatients);
+
+
+
+  const handleScheduleAppointment = (patientId: string) => {
+    window.location.href = `/appointment-scheduling?patient_id=${patientId}`;
+  };
 
   return (
     <TooltipProvider>
@@ -119,23 +132,27 @@ export default function PatientRecords() {
             <p className="text-muted-foreground">View and manage existing patient records</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="border-border"><Filter className="mr-2 h-4 w-4"/>Filter</Button>
-            <Button variant="outline" className="border-border"><Download className="mr-2 h-4 w-4"/>Export</Button>
+            <PatientFilter onFiltersChange={setFilters} activeFilters={filters} />
+              <Button
+                variant="outline"
+                className="border-border"
+                onClick={() => {
+                  exportPatientsToCSV(filteredPatients);
+                  toast({ title: "Export Complete", description: "Patient records exported successfully" });
+                }}
+              >
+                <Download className="mr-2 h-4 w-4" /> Export
+              </Button>
           </div>
         </div>
 
-        {/* Search & Stats */}
+        {/* Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-card md:col-span-2">
             <CardContent className="p-6">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by patient name, phone, or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Search by patient name, phone, or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"/>
               </div>
             </CardContent>
           </Card>
@@ -158,23 +175,18 @@ export default function PatientRecords() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-accent">
-                {patientRecords.filter(p => {
-                  const createdDate = new Date(p.created_at || 0);
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  return createdDate > weekAgo;
-                }).length}
+                {patientRecords.filter(p => new Date(p.created_at) > new Date(Date.now() - 7*24*60*60*1000)).length}
               </div>
               <p className="text-xs text-muted-foreground">This week</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Patient Table */}
+        {/* Table */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary"/>Patient Records Database
+              <FileText className="h-5 w-5 text-primary"/> Patient Records Database
             </CardTitle>
             <CardDescription>Complete list of all registered patients</CardDescription>
           </CardHeader>
@@ -183,101 +195,61 @@ export default function PatientRecords() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("id")}>
-                        Patient ID {getSortIcon("id")}
-                      </Button>
-                    </th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("first_name")}>
-                        Name {getSortIcon("first_name")}
-                      </Button>
-                    </th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("phone")}>
-                        Contact {getSortIcon("phone")}
-                      </Button>
-                    </th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("blood_group")}>
-                        Blood Group {getSortIcon("blood_group")}
-                      </Button>
-                    </th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("date_of_birth")}>
-                        Age/Gender {getSortIcon("date_of_birth")}
-                      </Button>
-                    </th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">
-                      <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort("created_at")}>
-                        Created {getSortIcon("created_at")}
-                      </Button>
-                    </th>
+                    {["id","first_name","phone","blood_group","date_of_birth","created_at"].map((col) => (
+                      <th key={col} className="text-left p-3 font-medium text-muted-foreground">
+                        <Button variant="ghost" className="h-auto p-0 font-medium justify-start hover:bg-transparent" onClick={() => requestSort(col)}>
+                          {col === "id" ? "Patient ID" : col.replace("_"," ").toUpperCase()}
+                          {getSortIcon(col)}
+                        </Button>
+                      </th>
+                    ))}
                     <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground">Loading patient records...</td>
-                    </tr>
+                    <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Loading patient records...</td></tr>
                   ) : sortedData.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                        {searchTerm ? "No patients found matching your search." : "No patient records found. Add patients from the Patient Onboarding page."}
+                    <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{searchTerm ? 'No patients found matching your search.' : 'No patient records found.'}</td></tr>
+                  ) : sortedData.map((patient) => (
+                    <tr key={patient.id} className="border-t hover:bg-muted/50">
+                      <td className="p-3 font-medium text-primary">{patient.id?.slice(0,8)}</td>
+                      <td className="p-3 font-medium">{patient.first_name} {patient.last_name}</td>
+                      <td className="p-3">
+                        <div className="space-y-1">
+                          <div className="text-sm">{patient.phone || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground">{patient.email || 'N/A'}</div>
+                        </div>
+                      </td>
+                      <td className="p-3">{patient.blood_group && <Badge variant="outline" className="text-xs">{patient.blood_group.toUpperCase()}</Badge>}</td>
+                      <td className="p-3 text-muted-foreground">{displayAge(patient.date_of_birth)} • {patient.gender || 'N/A'}</td>
+                      <td className="p-3 text-muted-foreground">{new Date(patient.created_at).toLocaleDateString()}</td>
+                      <td className="p-3 flex gap-2">
+                        <PatientHistoryDialog patient={patient} />
+                        <PatientEditDialog patient={patient} onPatientUpdate={fetchData} />
+                        {futureAppointments.has(patient.id) ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="sm" variant="secondary" className="h-8 px-2" disabled>
+                                <Calendar className="h-3 w-3 mr-1"/> Scheduled
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="text-sm">
+                                <p><strong>Date:</strong> {appointmentDetails.get(patient.id)?.appointment_date ? new Date(appointmentDetails.get(patient.id)?.appointment_date!).toLocaleDateString() : "N/A"}</p>
+                                <p><strong>Time:</strong> {appointmentDetails.get(patient.id)?.appointment_time || "N/A"}</p>
+                                <p><strong>Doctor:</strong> {appointmentDetails.get(patient.id)?.doctor_name || "N/A"}</p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <Button size="sm" variant="medical" className="h-8 px-2" onClick={() => handleScheduleAppointment(patient.id)}>
+                            <Calendar className="h-3 w-3 mr-1"/> Schedule
+                          </Button>
+                        )}
                       </td>
                     </tr>
-                  ) : (
-                    sortedData.map(patient => {
-                      const appt = appointmentDetails.get(patient.id!);
-                      return (
-                        <tr key={patient.id} className="border-t hover:bg-muted/50">
-                          <td className="p-3 font-medium text-primary">{patient.id?.slice(0,8)}</td>
-                          <td className="p-3"><div className="font-medium">{patient.first_name} {patient.last_name}</div></td>
-                          <td className="p-3">
-                            <div className="space-y-1">
-                              <div className="text-sm">{patient.phone || "N/A"}</div>
-                              <div className="text-xs text-muted-foreground">{patient.email || "N/A"}</div>
-                            </div>
-                          </td>
-                          <td className="p-3">{patient.blood_group && <Badge variant="outline" className="text-xs">{patient.blood_group.toUpperCase()}</Badge>}</td>
-                          <td className="p-3 text-muted-foreground">{calculateAge(patient.date_of_birth)} • {patient.gender || "N/A"}</td>
-                          <td className="p-3 text-muted-foreground">{new Date(patient.created_at || 0).toLocaleDateString()}</td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="h-8 w-8 p-0"><Eye className="h-3 w-3"/></Button>
-                              <Button size="sm" variant="outline" className="h-8 w-8 p-0"><Edit className="h-3 w-3"/></Button>
-
-                              {appt ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button size="sm" variant="secondary" className="h-8 px-2">
-                                      <Calendar className="h-3 w-3 mr-1"/>Scheduled
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <div className="text-sm">
-                                      <p><strong>Date:</strong> {new Date(appt.visit_date).toLocaleDateString()}</p>
-                                      <p><strong>Time:</strong> {appt.visit_time}</p>
-                                      <p><strong>Doctor ID:</strong> {appt.doctor}</p>
-                                      <p><strong>Department:</strong> {appt.doctor_department}</p>
-                                      <Button size="sm" variant="destructive" className="mt-2" onClick={() => handleDelete(appt._id)}>
-                                        <Trash className="h-3 w-3 mr-1"/>Cancel
-                                      </Button>
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                <Button size="sm" variant="medical" className="h-8 px-2" onClick={() => handleSchedule(patient.id!)}>
-                                  <Calendar className="h-3 w-3 mr-1"/>Schedule
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>

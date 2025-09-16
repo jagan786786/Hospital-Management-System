@@ -9,6 +9,8 @@ import { Patient } from "@/types/medical";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSortable } from "@/hooks/useSortable";
+import { usePagination } from "@/hooks/usePagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { cache } from "@/lib/cache";
 import { TableSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
 import { useNavigate } from "react-router-dom";
@@ -60,6 +62,7 @@ export default function PatientList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [patientRows, setPatientRows] = useState<PatientTableRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
   
   useEffect(() => {
     fetchTodaysPatients();
@@ -231,6 +234,7 @@ export default function PatientList() {
   });
 
   const { sortedData, requestSort, getSortIcon } = useSortable(filteredPatients);
+  const pagination = usePagination(sortedData, pageSize);
 
   const handleStartConsultation = async (patient: PatientTableRow) => {
     try {
@@ -525,7 +529,7 @@ export default function PatientList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((patient) => (
+              {pagination.paginatedData.map((patient) => (
                 <TableRow key={patient.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div>
@@ -644,10 +648,14 @@ export default function PatientList() {
               ))}
             </TableBody>
           </Table>
+          <TablePagination 
+            {...pagination}
+            onPageSizeChange={(size) => setPageSize(size)}
+          />
         </CardContent>
       </Card>
 
-      {sortedData.length === 0 && (
+      {pagination.totalItems === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
