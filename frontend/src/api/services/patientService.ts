@@ -7,7 +7,7 @@ export const getPatients = async (): Promise<PatientRecord[]> => {
   return res.data;
 };
 
-export const registerPatient = async (patient: PatientRecord): Promise<PatientRecord> => {
+export const registerPatient = async (patient: Partial<PatientRecord>) => {
   const res = await api.post("/patients/regsiterPatient", patient);
   return res.data;
 };
