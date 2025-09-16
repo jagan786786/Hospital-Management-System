@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSortable } from "@/hooks/useSortable";
+import { usePagination } from "@/hooks/usePagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { cache } from "@/lib/cache";
 import { TableSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
 
@@ -58,6 +60,7 @@ export default function AppointmentManagement() {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchAppointments();
@@ -274,6 +277,7 @@ export default function AppointmentManagement() {
   );
 
   const { sortedData, requestSort, getSortIcon } = useSortable(filteredAppointments);
+  const pagination = usePagination(sortedData, pageSize);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -445,14 +449,14 @@ export default function AppointmentManagement() {
                       </div>
                     </td>
                   </tr>
-                ) : sortedData.length === 0 ? (
+                ) : pagination.paginatedData.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-muted-foreground">
                       {statusFilter === 'all' ? 'No appointments found.' : `No ${statusFilter} appointments found.`}
                     </td>
                   </tr>
                 ) : (
-                  sortedData.map((appointment) => (
+                  pagination.paginatedData.map((appointment) => (
                     <tr key={appointment.id} className="border-t hover:bg-muted/50">
                       <td className="p-3">
                         <div className="space-y-1">
@@ -607,6 +611,10 @@ export default function AppointmentManagement() {
                 )}
               </tbody>
             </table>
+            <TablePagination 
+              {...pagination}
+              onPageSizeChange={(size) => setPageSize(size)}
+            />
           </div>
         </CardContent>
       </Card>

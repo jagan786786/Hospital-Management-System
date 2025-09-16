@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Users, Edit, UserCheck, UserX, Building2, Phone, Mail, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { usePagination } from "@/hooks/usePagination";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 interface Employee {
   id: string;
@@ -60,10 +62,13 @@ export default function EmployeeList() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
   });
+
+  const pagination = usePagination(employees, pageSize);
 
   const fetchEmployees = async () => {
     try {
@@ -243,7 +248,7 @@ export default function EmployeeList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {employees.map((employee) => (
+                {pagination.paginatedData.map((employee) => (
                   <TableRow key={employee.id}>
                     <TableCell className="font-mono text-sm">
                       {employee.employee_id}
@@ -310,6 +315,10 @@ export default function EmployeeList() {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination 
+              {...pagination}
+              onPageSizeChange={(size) => setPageSize(size)}
+            />
           </div>
         </CardContent>
       </Card>
