@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Users, UserPlus, Phone, Mail, Calendar, MapPin } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { registerPatient } from "@/api/services/patientService";
 
 export default function PatientOnboarding() {
   const [formData, setFormData] = useState({
@@ -24,62 +24,76 @@ export default function PatientOnboarding() {
   const [totalPatients, setTotalPatients] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchPatientStats();
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('patient-changes')
-      .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'patients' },
-        () => fetchPatientStats()
-      )
-      .subscribe();
+  // useEffect(() => {
+  //   fetchPatientStats();
+  //   // Subscribe to realtime changes
+  //   const channel = supabase
+  //     .channel('patient-changes')
+  //     .on('postgres_changes', 
+  //       { event: 'INSERT', schema: 'public', table: 'patients' },
+  //       () => fetchPatientStats()
+  //     )
+  //     .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  //   return () => { supabase.removeChannel(channel); };
+  // }, []);
 
-  const fetchPatientStats = async () => {
-    const { count } = await supabase.from('patients').select('*', { count: 'exact', head: true });
-    setTotalPatients(count || 0);
-  };
+  // const fetchPatientStats = async () => {
+  //   const { count } = await supabase.from('patients').select('*', { count: 'exact', head: true });
+  //   setTotalPatients(count || 0);
+  // };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async () => {
-    if (!formData.firstName || !formData.lastName) {
-      toast({ title: "Error", description: "First and last name are required", variant: "destructive" });
-      return;
-    }
+  const isFormValid =
+  formData.firstName.trim() !== "" &&
+  formData.lastName.trim() !== "" &&
+  formData.phone.trim() !== "";
 
+const handleSubmit = async () => {
+  if (!formData.firstName || !formData.lastName || !formData.phone) {
+        if (!formData.firstName) {
+        toast({ title: "Error", description: "First Name is required", variant: "destructive" });
+        return;
+       }
+       if (!formData.lastName) {
+        toast({ title: "Error", description: "Last Name is required", variant: "destructive" });
+        return;
+      } 
+      if (!formData.phone) {
+        toast({ title: "Error", description: "Phone Number is required", variant: "destructive" });
+        return;
+      }  
+    
+    return;
+  }
     setIsSubmitting(true);
-    try {
-      const { error } = await supabase.from('patients').insert({
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        email: formData.email,
-        date_of_birth: formData.dateOfBirth || null,
-        gender: formData.gender,
-        blood_group: formData.bloodGroup,
-        address: formData.address,
-        medical_history: formData.medicalHistory
-      });
+  try {
+    await registerPatient({
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      phone: formData.phone,
+      email: formData.email,
+      date_of_birth: formData.dateOfBirth || null,
+      gender: formData.gender,
+      blood_group: formData.bloodGroup,
+      address: formData.address,
+      medical_history: formData.medicalHistory,
+    });
 
-      if (error) throw error;
+    toast({ title: "Success", description: "Patient registered successfully!" });
+    setFormData({ firstName: "", lastName: "", phone: "", email: "", dateOfBirth: "", gender: "", bloodGroup: "", address: "", medicalHistory: "" });
 
-      toast({ title: "Success", description: "Patient registered successfully!" });
-      setFormData({
-        firstName: "", lastName: "", phone: "", email: "", dateOfBirth: "",
-        gender: "", bloodGroup: "", address: "", medicalHistory: ""
-      });
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to register patient", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // fetchPatientStats();
+  } catch (error) {
+    console.log(error, "Error Message")
+    toast({ title: "Error", description: error.response.data.message, variant: "destructive" });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="flex-1 space-y-6 p-8">
@@ -89,13 +103,13 @@ export default function PatientOnboarding() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Patient Onboarding</h1>
           <p className="text-muted-foreground">Register new patients and manage their information</p>
         </div>
-        <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
+        {/* <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
           <UserPlus className="mr-2 h-4 w-4" />
           Add Patient
-        </Button>
+        </Button> */}
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -129,7 +143,7 @@ export default function PatientOnboarding() {
             <p className="text-xs text-muted-foreground">Awaiting documents</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Registration Form */}
       <Card className="shadow-card">
@@ -261,16 +275,23 @@ export default function PatientOnboarding() {
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button 
+            {/* <Button 
               className="bg-primary hover:bg-primary-hover text-primary-foreground flex-1"
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Registering..." : "Register Patient"}
+            </Button> */}
+            <Button 
+              className="bg-primary hover:bg-primary-hover text-primary-foreground flex-1"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !isFormValid}  // 🔹 disable if not valid
+            >
+              {isSubmitting ? "Registering..." : "Register Patient"}
             </Button>
-            <Button variant="outline" className="flex-1">
+            {/* <Button variant="outline" className="flex-1">
               Save as Draft
-            </Button>
+            </Button> */}
           </div>
         </CardContent>
       </Card>
