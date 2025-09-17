@@ -36,7 +36,18 @@ router.post(
               last_name: { type: "string" },
               email: { type: "string", format: "email" },
               phone: { type: "string" },
-              employee_type: { type: "string", enum: ["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"] },
+              employee_type: {
+                type: "array",
+                description: "List of role objects assigned to this employee",
+                items: {
+                  type: "object",
+                  properties: {
+                    role_id: { type: "string", example: "R001" },
+                    name: { type: "string", example: "Doctor" }
+                  },
+                  required: ["role_id"]
+                }
+              },
               department: { type: "string" },
               salary: { type: "number" },
               address: { type: "string" },
@@ -50,7 +61,10 @@ router.post(
             last_name: "Smith",
             email: "jane.smith@example.com",
             phone: "9876543210",
-            employee_type: "Doctor",
+            employee_type: [
+              { role_id: "R001", name: "Doctor" },
+              { role_id: "R002", name: "Admin" }
+            ],
             department: "Cardiology",
             salary: 50000,
             address: "123 Hospital Road",
@@ -127,7 +141,18 @@ router.put('/updateEmployee/:employeeId',
               last_name: { type: "string" },
               email: { type: "string", format: "email" },
               phone: { type: "string" },
-              employee_type: { type: "string", enum: ["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"] },
+              employee_type: {
+                  type: "array",
+                  description: "List of role objects assigned to this employee",
+                  items: {
+                    type: "object",
+                    properties: {
+                      role_id: { type: "string", example: "R001" },
+                      name: { type: "string", example: "Doctor" }
+                    },
+                    required: ["role_id"]
+                  }
+                },
               department: { type: "string" },
               salary: { type: "number" },
               address: { type: "string" },
@@ -141,7 +166,10 @@ router.put('/updateEmployee/:employeeId',
             last_name: "Smith",
             email: "jane.smith@example.com",
             phone: "9876543210",
-            employee_type: "Doctor",
+            employee_type: [
+              { role_id: "R001", name: "Doctor" },
+              { role_id: "R002", name: "Admin" }
+            ],
             department: "Cardiology",
             salary: 50000,
             address: "123 Hospital Road",

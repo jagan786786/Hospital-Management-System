@@ -26,7 +26,7 @@ exports.createEmployee = async (req, res) => {
     address,
     emergency_contact_name,
     emergency_contact_phone,
-    date_of_joining
+    date_of_joining, 
   } = req.body;
 
   try {
@@ -75,6 +75,7 @@ exports.createEmployee = async (req, res) => {
       date_of_joining: date_of_joining ? new Date(date_of_joining) : new Date(),
       status: 'active',
       password_hash: passwordHash
+      
     });
 
     await employee.save();
@@ -119,10 +120,18 @@ exports.getEmployee = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     const { employeeId } = req.params;
+    const updates = { ...req.body, updated_at: new Date() };
 
-    const updatedEmployee = await Employee.findByIdAndUpdate(
+    // ✅ Handle password update properly
+    if (updates.password) {
+      const hashed = await hashPassword(updates.password);
+      updates.password_hash = hashed;
+      delete updates.password; // remove plain password
+    }
+   
+   const updatedEmployee = await Employee.findByIdAndUpdate(
       employeeId,
-      { ...req.body, updated_at: new Date() },  // ensure updated_at changes
+      updates,
       { new: true, runValidators: true }
     );
 
