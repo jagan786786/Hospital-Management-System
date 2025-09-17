@@ -73,6 +73,7 @@ exports.login = async (req, res) => {
     const refreshToken = await generateRefreshToken(payload);
 
     res.json({
+      id: user._id,
       accessToken,
       refreshToken,
       role,

@@ -1,15 +1,14 @@
-import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { 
-  Users, 
-  Calendar, 
-  FileText, 
-  Settings, 
+import { useState, useEffect } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  Users,
+  Calendar,
+  FileText,
+  Settings,
   LogOut,
   Activity,
-  Stethoscope,
   ChevronRight,
-  Shield
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,70 +19,105 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import medicalLogo from "@/assets/medical-logo.png";
-
-const navigationSections = [
-  {
-    title: "Patient Management",
-    defaultOpen: true,
-    items: [
-      { title: "Patient Onboarding", url: "/patient-onboarding", icon: Users },
-      { title: "Patient Records", url: "/patient-records", icon: FileText },
-      { title: "Schedule Appointment", url: "/appointment-scheduling", icon: Calendar },
-      { title: "Appointments", url: "/appointments", icon: Calendar },
-    ]
-  },
-  {
-    title: "Doctor Management",
-    defaultOpen: false,
-    items: [
-      { title: "Patient Queue", url: "/", icon: Users },
-      { title: "My Appointments", url: "/appointments", icon: Calendar },
-    ]
-  },
-  {
-    title: "Inventory Management",
-    defaultOpen: false,
-    items: [
-      { title: "Medicine Stock", url: "/medicine-stock", icon: Activity },
-      { title: "Stock Reports", url: "/stock-reports", icon: FileText },
-    ]
-  },
-  {
-    title: "HR Management",
-    defaultOpen: false,
-    items: [
-      { title: "Employee Onboarding", url: "/employee-onboarding", icon: Users },
-      { title: "View Employees", url: "/employees", icon: Users },
-    ]
-  },
-  {
-    title: "Administration",
-    defaultOpen: false,
-    items: [
-      { title: "Screen Access", url: "/screens", icon: Shield },
-      { title: "User Roles", url: "/user-roles", icon: Users },
-      { title: "System Settings", url: "/settings", icon: Settings },
-    ]
-  }
-];
-
-const doctorInfo = {
-  name: "Dr. Sarah Mitchell",
-  specialty: "Internal Medicine",
-  avatar: "",
-};
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export function MedicalSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const currentPath = location.pathname;
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user, logout } = useAuth(); // no loading
   const collapsed = state === "collapsed";
+  const currentPath = location.pathname;
+
+  // Initialize userInfo directly from `user` or fallback to Guest
+  const [userInfo, setUserInfo] = useState({
+    name: user?.name || "Guest",
+    role: user?.role || "Patient",
+    avatar: user?.avatar || "",
+  });
+
+  // Update userInfo whenever `user` changes
+  useEffect(() => {
+    if (user) {
+      setUserInfo({
+        name: user.name,
+        role: user.role,
+        avatar: user.avatar || "",
+      });
+    } else {
+      setUserInfo({ name: "Guest", role: "Patient", avatar: "" });
+    }
+  }, [user]);
+
+  const navigationSections = [
+    {
+      title: "Patient Management",
+      defaultOpen: true,
+      items: [
+        {
+          title: "Patient Onboarding",
+          url: "/patient-onboarding",
+          icon: Users,
+        },
+        { title: "Patient Records", url: "/patient-records", icon: FileText },
+        {
+          title: "Schedule Appointment",
+          url: "/appointment-scheduling",
+          icon: Calendar,
+        },
+        { title: "Appointments", url: "/appointments", icon: Calendar },
+      ],
+    },
+    {
+      title: "Doctor Management",
+      defaultOpen: false,
+      items: [
+        { title: "Patient Queue", url: "/", icon: Users },
+        { title: "My Appointments", url: "/appointments", icon: Calendar },
+      ],
+    },
+    {
+      title: "Inventory Management",
+      defaultOpen: false,
+      items: [
+        { title: "Medicine Stock", url: "/medicine-stock", icon: Activity },
+        { title: "Stock Reports", url: "/stock-reports", icon: FileText },
+      ],
+    },
+    {
+      title: "HR Management",
+      defaultOpen: false,
+      items: [
+        {
+          title: "Employee Onboarding",
+          url: "/employee-onboarding",
+          icon: Users,
+        },
+        { title: "View Employees", url: "/employees", icon: Users },
+      ],
+    },
+    {
+      title: "Administration",
+      defaultOpen: false,
+      items: [
+        { title: "Screen Access", url: "/screens", icon: Shield },
+        { title: "User Roles", url: "/user-roles", icon: Users },
+        { title: "System Settings", url: "/settings", icon: Settings },
+      ],
+    },
+  ];
+
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     navigationSections.reduce((acc, section) => {
       acc[section.title] = section.defaultOpen;
@@ -91,46 +125,53 @@ export function MedicalSidebar() {
     }, {} as Record<string, boolean>)
   );
 
-  const isActive = (path: string) => {
-    if (path === "/") return currentPath === "/";
-    return currentPath.startsWith(path);
-  };
+  const isActive = (path: string) =>
+    path === "/" ? currentPath === "/" : currentPath.startsWith(path);
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-medical" 
+    isActive
+      ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-medical"
       : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-smooth";
 
-  const toggleSection = (sectionTitle: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const isSectionActive = (section: typeof navigationSections[0]) => {
-    return section.items.some(item => isActive(item.url));
+  const isSectionActive = (section: (typeof navigationSections)[0]) =>
+    section.items.some((item) => isActive(item.url));
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+    toast({
+      title: "Logged out",
+      description: "You have successfully logged out",
+    });
   };
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-16" : "w-72"} bg-gradient-sidebar border-r border-sidebar-border shadow-elegant transition-medical`}
+      className={`${
+        collapsed ? "w-16" : "w-72"
+      } bg-gradient-sidebar border-r border-sidebar-border shadow-elegant transition-medical`}
       collapsible="icon"
     >
       <SidebarContent className="p-0">
-        {/* Header with Logo */}
-        <div className="p-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
-              <img src={medicalLogo} alt="Medical Logo" className="w-6 h-6" />
-            </div>
-            {!collapsed && (
-              <div>
-                <h1 className="text-lg font-bold text-sidebar-foreground">MediCare</h1>
-                <p className="text-xs text-sidebar-foreground/70">Admin Dashboard</p>
-              </div>
-            )}
+        {/* Header */}
+        <div className="p-6 border-b border-sidebar-border flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-sidebar-primary/20 flex items-center justify-center">
+            <img src={medicalLogo} alt="Medical Logo" className="w-6 h-6" />
           </div>
+          {!collapsed && (
+            <div>
+              <h1 className="text-lg font-bold text-sidebar-foreground">
+                MediCare
+              </h1>
+              <p className="text-xs text-sidebar-foreground/70">
+                Admin Dashboard
+              </p>
+            </div>
+          )}
         </div>
 
         {/* User Info */}
@@ -138,28 +179,36 @@ export function MedicalSidebar() {
           <div className="p-6 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <Avatar className="w-12 h-12 border-2 border-sidebar-primary/30">
-                <AvatarImage src={doctorInfo.avatar} />
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
-                  SM
-                </AvatarFallback>
+                {userInfo.avatar ? (
+                  <AvatarImage src={userInfo.avatar} />
+                ) : (
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
+                    {userInfo.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {doctorInfo.name}
+                  {userInfo.name}
                 </p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">
-                  {doctorInfo.specialty}
+                  {userInfo.role}
                 </p>
                 <div className="flex items-center gap-1 mt-1">
                   <div className="w-2 h-2 bg-accent rounded-full"></div>
-                  <span className="text-xs text-sidebar-foreground/70">Online</span>
+                  <span className="text-xs text-sidebar-foreground/70">
+                    Online
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Navigation Sections */}
+        {/* Navigation */}
         {navigationSections.map((section) => (
           <Collapsible
             key={section.title}
@@ -168,17 +217,19 @@ export function MedicalSidebar() {
           >
             <SidebarGroup className="px-3 py-2">
               <CollapsibleTrigger asChild>
-                <SidebarGroupLabel 
-                  className={`text-sidebar-foreground/70 text-xs font-medium mb-2 cursor-pointer hover:text-sidebar-foreground transition-colors flex items-center justify-between group ${
+                <SidebarGroupLabel
+                  className={`text-sidebar-foreground/70 text-xs font-medium mb-2 cursor-pointer flex items-center justify-between ${
                     isSectionActive(section) ? "text-sidebar-primary" : ""
                   }`}
                 >
                   {!collapsed ? (
                     <>
                       <span>{section.title.toUpperCase()}</span>
-                      <ChevronRight className={`w-3 h-3 transition-transform duration-200 ${
-                        openSections[section.title] ? "rotate-90" : ""
-                      } group-hover:text-sidebar-foreground`} />
+                      <ChevronRight
+                        className={`w-3 h-3 transition-transform duration-200 ${
+                          openSections[section.title] ? "rotate-90" : ""
+                        }`}
+                      />
                     </>
                   ) : (
                     <span className="w-2 h-2 rounded-full bg-sidebar-primary/50"></span>
@@ -191,13 +242,19 @@ export function MedicalSidebar() {
                     {section.items.map((item) => (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild className="h-11">
-                          <NavLink 
-                            to={item.url} 
+                          <NavLink
+                            to={item.url}
                             end={item.url === "/"}
                             className={getNavCls}
                           >
-                            <item.icon className={`${collapsed ? "w-5 h-5" : "w-5 h-5 mr-3"} flex-shrink-0`} />
-                            {!collapsed && <span className="truncate">{item.title}</span>}
+                            <item.icon
+                              className={`${
+                                collapsed ? "w-5 h-5" : "w-5 h-5 mr-3"
+                              } flex-shrink-0`}
+                            />
+                            {!collapsed && (
+                              <span className="truncate">{item.title}</span>
+                            )}
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -209,12 +266,19 @@ export function MedicalSidebar() {
           </Collapsible>
         ))}
 
-        {/* Bottom Actions */}
+        {/* Logout */}
         <div className="mt-auto p-3 border-t border-sidebar-border">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton className="h-11 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-smooth">
-                <LogOut className={`${collapsed ? "w-5 h-5" : "w-5 h-5 mr-3"} flex-shrink-0`} />
+              <SidebarMenuButton
+                onClick={handleLogout}
+                className="h-11 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-smooth"
+              >
+                <LogOut
+                  className={`${
+                    collapsed ? "w-5 h-5" : "w-5 h-5 mr-3"
+                  } flex-shrink-0`}
+                />
                 {!collapsed && <span>Logout</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
