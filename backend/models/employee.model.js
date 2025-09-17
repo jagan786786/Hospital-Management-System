@@ -6,11 +6,12 @@ const employeeSchema = new mongoose.Schema({
   last_name: { type: String, required: true, minlength: 2 },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },
-  employee_type: { 
-    type: String, 
-    required: true,
-    enum: ["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"]
-  },
+  employee_type:[
+      {
+          type: String,
+          required: false, // now not mandatory
+        }
+      ],
   department: { type: String, default: null },
   salary: { type: Number, default: null },
   address: { type: String, default: null },

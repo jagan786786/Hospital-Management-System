@@ -12,7 +12,7 @@ router.post(
     body('last_name').isString().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
     body('email').isEmail().withMessage('Invalid email'),
     body('phone').isString().isLength({ min: 10 }).withMessage('Phone must be at least 10 characters'),
-    body('employee_type').isIn(allowedTypes).withMessage('Invalid employee type'),
+    body('employee_type').isArray().withMessage("Employee type must be an array of role codes"),
     body('department').optional().isString(),
     body('salary').optional().isNumeric().withMessage('Salary must be numeric'),
     body('address').optional().isString(),
