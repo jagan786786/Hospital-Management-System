@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const Employee = require('../models/employee.model');
 const { generateEmployeeId } = require('../services/idService.service');
 const { hashPassword } = require('../utils/hash');
+const Role = require("../models/role.model"); // ✅ import Role model
 
 const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'Employee@123';
 const EMPLOYEE_ID_PREFIX = process.env.EMPLOYEE_ID_PREFIX || 'EMP';
@@ -44,8 +45,19 @@ exports.createEmployee = async (req, res) => {
       return res.status(409).json({ message: 'Duplicate employee' });
     }
 
-    const employeeId = await generateEmployeeId(EMPLOYEE_ID_PREFIX, EMPLOYEE_ID_PADDING);
+      // ✅ Validate roles
+    let validRoles = [];
 
+    if (Array.isArray(employee_type) && employee_type.length > 0) {
+      validRoles = await Role.find({ role_id: { $in: employee_type } }).select("role_id");
+      if (validRoles.length !== employee_type.length) {
+        return res.status(400).json({ message: "One or more provided roles are invalid" });
+      }
+    }
+    
+     // Generate employeeId
+    const employeeId = await generateEmployeeId(EMPLOYEE_ID_PREFIX, EMPLOYEE_ID_PADDING);
+     // Hash default password
     const passwordHash = await hashPassword(DEFAULT_PASSWORD);
 
     const employee = new Employee({
@@ -54,7 +66,7 @@ exports.createEmployee = async (req, res) => {
       last_name,
       email,
       phone,
-      employee_type,
+      employee_type: validRoles.map((r) => r._id), // ✅ ensure only valid role IDs
       department: department || null,
       salary: salary !== undefined && salary !== '' ? parseFloat(salary) : null,
       address: address || null,
