@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, matchPath } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { MedicalSidebar } from "@/components/medical/MedicalSidebar";
 import PatientList from "./pages/PatientList";
@@ -32,9 +32,11 @@ const Layout = ({ children }) => {
   const location = useLocation();
 
   // Pages where we DON'T want sidebar & header
-  const noSidebarRoutes = ["/login", "/unauthorized","/reset-password"];
+  const noSidebarRoutes = ["/login", "/unauthorized", "/reset-password/:id"];
 
-  const hideSidebar = noSidebarRoutes.includes(location.pathname);
+  const hideSidebar = noSidebarRoutes.some((route) =>
+    matchPath({ path: route, end: true }, location.pathname)
+  );
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -70,7 +72,10 @@ const App = () => (
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/unauthorized" element={<NotAuthenticated />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route
+                  path="/reset-password/:id"
+                  element={<ResetPasswordPage />}
+                />
                 <Route
                   path="/"
                   element={

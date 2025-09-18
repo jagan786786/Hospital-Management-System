@@ -20,7 +20,7 @@ export const getEmployeeById = async (id: string) => {
 
 // (Optional) Update employee
 export const updateEmployee = async (id: string, employeeData: any) => {
-  const response = await api.put(`/employees/${id}`, employeeData);
+  const response = await api.put(`/employees/updateEmployee/${id}`, employeeData);
   return response.data;
 };
 

@@ -18,8 +18,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { updateEmployee } from "../api/services/employeService";
+import { useNavigate, useParams } from "react-router-dom";
 
 const ResetPasswordPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -81,25 +85,23 @@ const ResetPasswordPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
     setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await updateEmployee(id!, { password: newPassword });
       toast({
         title: "Password reset successful!",
         description: "Your password has been updated successfully.",
       });
-      // Reset form
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error) {
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (error: any) {
       toast({
         title: "Password reset failed",
-        description: "Something went wrong. Please try again.",
+        description:
+          error.response?.data?.message ||
+          "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -435,18 +437,6 @@ const ResetPasswordPage = () => {
                   "Update Password"
                 )}
               </Button>
-
-              {/* Back to Login Link */}
-              <div className="text-center text-sm text-gray-600 pt-4 border-t border-gray-100">
-                Remember your password?{" "}
-                <a
-                  href="#"
-                  className="font-semibold hover:underline transition-colors"
-                  style={{ color: "rgba(59, 130, 246, 0.8)" }}
-                >
-                  Back to login
-                </a>
-              </div>
             </form>
           </CardContent>
         </Card>

@@ -94,32 +94,33 @@ exports.createEmployee = async (req, res) => {
       password_hash: passwordHash,
     });
 
-    await employee.save();
+    const employeeRegistered = await employee.save();
 
-    const resetLink = `${FRONTEND_URL}/reset-password/${employee.employee_id}`;
+    if (employeeRegistered) {
+      res.status(201).json({
+        message: "Employee created",
+        name: employee.first_name,
+        employee_id: employee._id,
+        note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
+      });
 
-    // Send onboarding email
-    try {
-      if (ONBOARDING_TEMPLATE_ID) {
-        await sendEmail(ONBOARDING_TEMPLATE_ID, {
-          first_name: employee.first_name,
-          last_name: employee.last_name,
-          email: employee.email, 
-          employee_id: employee.employee_id,
-          reset_link: resetLink,
-        });
+      const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
+
+      try {
+        if (ONBOARDING_TEMPLATE_ID) {
+          await sendEmail(ONBOARDING_TEMPLATE_ID, {
+            first_name: employee.first_name,
+            last_name: employee.last_name,
+            email: employee.email,
+            employee_id: employee.employee_id,
+            reset_link: resetLink,
+          });
+          emailSent = true;
+        }
+      } catch (emailError) {
+        console.error("Error sending onboarding email:", emailError);
       }
-    } catch (emailError) {
-      console.error("Error sending onboarding email:", emailError);
     }
-
-    return res.status(201).json({
-      message: "Employee created",
-      employee_id: employee.employee_id,
-      reset_link: resetLink,
-      email_sent: !!ONBOARDING_TEMPLATE_ID,
-      note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
-    });
   } catch (err) {
     console.error("Error creating employee:", err);
     return res.status(500).json({ message: "Internal server error" });
