@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import NotAuthenticated from "./components/NotAuthenticated";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -68,34 +69,96 @@ const App = () => (
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/unauthorized" element={<NotAuthenticated />} />
-                <Route path="/" element={<PatientList />} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <PatientList />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/patient/:patientId"
-                  element={<PrescriptionPage />}
+                  element={
+                    <ProtectedRoute>
+                      <PrescriptionPage />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route path="/prescription" element={<PrescriptionPage />} />
                 <Route
                   path="/patient-onboarding"
-                  element={<PatientOnboarding />}
+                  element={
+                    <ProtectedRoute>
+                      <PatientOnboarding />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route path="/patient-records" element={<PatientRecords />} />
                 <Route
                   path="/appointment-scheduling"
-                  element={<AppointmentScheduling />}
+                  element={
+                    <ProtectedRoute>
+                      <AppointmentScheduling />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/appointments"
-                  element={<AppointmentManagement />}
+                  element={
+                    <ProtectedRoute>
+                      <AppointmentManagement />
+                    </ProtectedRoute>
+                  }
                 />
-                <Route path="/medicine-stock" element={<MedicineStock />} />
-                <Route path="/stock-reports" element={<StockReports />} />
+                <Route
+                  path="/medicine-stock"
+                  element={
+                    <ProtectedRoute>
+                      <MedicineStock />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/stock-reports"
+                  element={
+                    <ProtectedRoute>
+                      <StockReports />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/employee-onboarding"
-                  element={<EmployeeOnboarding />}
+                  element={
+                    <ProtectedRoute>
+                      <EmployeeOnboarding />
+                    </ProtectedRoute>
+                  }
                 />
-                <Route path="/employees" element={<EmployeeList />} />
-                <Route path="/screens" element={<ScreensManagement />} />
-                <Route path="/user-roles" element={<UserRoleManagement />} />
+                <Route
+                  path="/employees"
+                  element={
+                    <ProtectedRoute>
+                      <EmployeeList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/screens"
+                  element={
+                    <ProtectedRoute>
+                      <ScreensManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/user-roles"
+                  element={
+                    <ProtectedRoute>
+                      <UserRoleManagement />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
