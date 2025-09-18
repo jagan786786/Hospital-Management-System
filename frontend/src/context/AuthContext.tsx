@@ -1,12 +1,11 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { logoutUser } from "../api/services/loginService";
 
-export type UserType = {
+type UserType = {
   id: string;
   name: string;
-  role: string;
-  type: "employee" | "patient";
-  avatar?: string;
+  roles: string[]; // must match backend
+  type: string; // employee | patient
 };
 
 type AuthContextType = {
@@ -17,14 +16,14 @@ type AuthContextType = {
     refreshToken: string,
     userInfo: UserType
   ) => void;
-  logout: () => Promise<void>;
+  logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: () => {},
-  logout: async () => {},
+  logout: () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -50,15 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(userInfo);
   };
 
-  const logout = async () => {
-    const token = localStorage.getItem("refreshToken");
-    if (token) {
-      try {
-        await logoutUser(token);
-      } catch (err) {
-        console.error("Logout failed", err);
-      }
-    }
+  const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");

@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, Sparkles, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { LoginPayload } from "@/types/auth";
 
 export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,7 @@ export default function LoginForm() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -48,18 +51,27 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
+    console.log(data);
+    
     try {
-      const response = await loginUser(data); // ✅ data has both identifier & password
+      const response = await loginUser(data as LoginPayload);
+      console.log(response);
+      
+      // ✅ correct: backend sends "roles"
       login(response.accessToken, response.refreshToken, {
-        id: "",
+        id: response.id,
         name: response.name,
-        role: response.role,
+        roles: response.roles || [],
         type: response.type,
       });
+
       toast.success(`Welcome back, ${response.name}!`);
-      if (response.type === "patient")
-        window.location.href = "/patient-onboarding";
-      else window.location.href = "/employee-onboarding";
+
+      if (response.type === "patient") {
+        navigate("/patient-onboarding");
+      } else {
+        navigate("/employee-onboarding");
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Invalid credentials");
     } finally {
@@ -186,7 +198,7 @@ export default function LoginForm() {
                             {...field}
                             placeholder="Enter your email or phone number"
                             className="pl-12"
-                            disabled={isSubmitting}
+                            autoComplete="username"
                           />
                         </div>
                       </FormControl>
@@ -210,7 +222,7 @@ export default function LoginForm() {
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             className="pl-12 pr-12"
-                            disabled={isSubmitting}
+                            autoComplete="current-password"
                           />
                           <button
                             type="button"

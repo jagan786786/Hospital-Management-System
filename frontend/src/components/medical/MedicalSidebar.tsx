@@ -36,29 +36,16 @@ export function MedicalSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, logout } = useAuth(); // no loading
   const collapsed = state === "collapsed";
   const currentPath = location.pathname;
 
-  // Initialize userInfo directly from `user` or fallback to Guest
-  const [userInfo, setUserInfo] = useState({
-    name: user?.name || "Guest",
-    role: user?.role || "Patient",
-    avatar: user?.avatar || "",
-  });
+  const { user, logout } = useAuth();
 
-  // Update userInfo whenever `user` changes
-  useEffect(() => {
-    if (user) {
-      setUserInfo({
-        name: user.name,
-        role: user.role,
-        avatar: user.avatar || "",
-      });
-    } else {
-      setUserInfo({ name: "Guest", role: "Patient", avatar: "" });
-    }
-  }, [user]);
+  const userInfo = {
+    name: user?.name || "Guest",
+    roles: user?.roles || ["User"],
+    avatar: "",
+  };
 
   const navigationSections = [
     {
@@ -179,24 +166,24 @@ export function MedicalSidebar() {
           <div className="p-6 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <Avatar className="w-12 h-12 border-2 border-sidebar-primary/30">
-                {userInfo.avatar ? (
-                  <AvatarImage src={userInfo.avatar} />
-                ) : (
-                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
-                    {userInfo.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                )}
+                <AvatarImage src={userInfo.avatar} />
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
+                  {userInfo.name
+                    ? userInfo.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                    : "GU"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
                   {userInfo.name}
                 </p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">
-                  {userInfo.role}
+                  {userInfo.roles.join(", ")}
                 </p>
+
                 <div className="flex items-center gap-1 mt-1">
                   <div className="w-2 h-2 bg-accent rounded-full"></div>
                   <span className="text-xs text-sidebar-foreground/70">

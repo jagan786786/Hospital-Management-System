@@ -6,9 +6,10 @@ export interface LoginPayload {
 
 // Response received from login endpoint
 export interface LoginResponse {
+    id: string;
     accessToken: string;
     refreshToken: string;
-    role: string;
+    roles: string[];
     name: string;
     type: "employee" | "patient";
 }

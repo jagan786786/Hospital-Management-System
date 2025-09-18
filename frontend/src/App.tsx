@@ -21,6 +21,7 @@ import UserRoleManagement from "./pages/UserRoleManagement";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import NotAuthenticated from "./components/NotAuthenticated";
+import { AuthProvider } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -62,38 +63,43 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <SidebarProvider>
-          <Layout>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/unauthorized" element={<NotAuthenticated />} />
-              <Route path="/" element={<PatientList />} />
-              <Route
-                path="/patient/:patientId"
-                element={<PrescriptionPage />}
-              />
-              <Route path="/prescription" element={<PrescriptionPage />} />
-              <Route
-                path="/patient-onboarding"
-                element={<PatientOnboarding />}
-              />
-              <Route path="/patient-records" element={<PatientRecords />} />
-              <Route
-                path="/appointment-scheduling"
-                element={<AppointmentScheduling />}
-              />
-              <Route path="/appointments" element={<AppointmentManagement />} />
-              <Route path="/medicine-stock" element={<MedicineStock />} />
-              <Route path="/stock-reports" element={<StockReports />} />
-              <Route
-                path="/employee-onboarding"
-                element={<EmployeeOnboarding />}
-              />
-              <Route path="/employees" element={<EmployeeList />} />
-              <Route path="/screens" element={<ScreensManagement />} />
-              <Route path="/user-roles" element={<UserRoleManagement />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <AuthProvider>
+            <Layout>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/unauthorized" element={<NotAuthenticated />} />
+                <Route path="/" element={<PatientList />} />
+                <Route
+                  path="/patient/:patientId"
+                  element={<PrescriptionPage />}
+                />
+                <Route path="/prescription" element={<PrescriptionPage />} />
+                <Route
+                  path="/patient-onboarding"
+                  element={<PatientOnboarding />}
+                />
+                <Route path="/patient-records" element={<PatientRecords />} />
+                <Route
+                  path="/appointment-scheduling"
+                  element={<AppointmentScheduling />}
+                />
+                <Route
+                  path="/appointments"
+                  element={<AppointmentManagement />}
+                />
+                <Route path="/medicine-stock" element={<MedicineStock />} />
+                <Route path="/stock-reports" element={<StockReports />} />
+                <Route
+                  path="/employee-onboarding"
+                  element={<EmployeeOnboarding />}
+                />
+                <Route path="/employees" element={<EmployeeList />} />
+                <Route path="/screens" element={<ScreensManagement />} />
+                <Route path="/user-roles" element={<UserRoleManagement />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </AuthProvider>
         </SidebarProvider>
       </BrowserRouter>
     </TooltipProvider>
