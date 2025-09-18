@@ -1,12 +1,18 @@
-const { validationResult } = require('express-validator');
-const Employee = require('../models/employee.model');
-const { generateEmployeeId } = require('../services/idService.service');
-const { hashPassword } = require('../utils/hash');
+const { validationResult } = require("express-validator");
+const Employee = require("../models/employee.model");
+const { generateEmployeeId } = require("../services/idService.service");
+const { hashPassword } = require("../utils/hash");
 const Role = require("../models/role.model"); // ✅ import Role model
+const { sendEmail } = require("../controllers/email.controller");
 
-const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'Employee@123';
-const EMPLOYEE_ID_PREFIX = process.env.EMPLOYEE_ID_PREFIX || 'EMP';
-const EMPLOYEE_ID_PADDING = parseInt(process.env.EMPLOYEE_ID_PADDING || '6', 10);
+const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || "Employee@123";
+const EMPLOYEE_ID_PREFIX = process.env.EMPLOYEE_ID_PREFIX || "EMP";
+const EMPLOYEE_ID_PADDING = parseInt(
+  process.env.EMPLOYEE_ID_PADDING || "6",
+  10
+);
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const ONBOARDING_TEMPLATE_ID = process.env.ONBOARDING_TEMPLATE_ID;
 
 exports.createEmployee = async (req, res) => {
   // validation
@@ -26,38 +32,51 @@ exports.createEmployee = async (req, res) => {
     address,
     emergency_contact_name,
     emergency_contact_phone,
-    date_of_joining, 
+    date_of_joining,
   } = req.body;
 
   try {
     // duplicate check
     const existing = await Employee.findOne({
-      $or: [{ email }, { phone }]
+      $or: [{ email }, { phone }],
     }).lean();
 
     if (existing) {
       if (existing.email === email) {
-        return res.status(409).json({ message: 'An employee with this email already exists' });
+        return res
+          .status(409)
+          .json({ message: "An employee with this email already exists" });
       }
       if (existing.phone === phone) {
-        return res.status(409).json({ message: 'An employee with this phone number already exists' });
+        return res
+          .status(409)
+          .json({
+            message: "An employee with this phone number already exists",
+          });
       }
-      return res.status(409).json({ message: 'Duplicate employee' });
+      return res.status(409).json({ message: "Duplicate employee" });
     }
 
-      // ✅ Validate roles
+    // ✅ Validate roles
     let validRoles = [];
 
     if (Array.isArray(employee_type) && employee_type.length > 0) {
-      validRoles = await Role.find({ role_id: { $in: employee_type } }).select("role_id");
+      validRoles = await Role.find({ role_id: { $in: employee_type } }).select(
+        "role_id"
+      );
       if (validRoles.length !== employee_type.length) {
-        return res.status(400).json({ message: "One or more provided roles are invalid" });
+        return res
+          .status(400)
+          .json({ message: "One or more provided roles are invalid" });
       }
     }
-    
-     // Generate employeeId
-    const employeeId = await generateEmployeeId(EMPLOYEE_ID_PREFIX, EMPLOYEE_ID_PADDING);
-     // Hash default password
+
+    // Generate employeeId
+    const employeeId = await generateEmployeeId(
+      EMPLOYEE_ID_PREFIX,
+      EMPLOYEE_ID_PADDING
+    );
+    // Hash default password
     const passwordHash = await hashPassword(DEFAULT_PASSWORD);
 
     const employee = new Employee({
@@ -68,53 +87,69 @@ exports.createEmployee = async (req, res) => {
       phone,
       employee_type: validRoles.map((r) => r._id), // ✅ ensure only valid role IDs
       department: department || null,
-      salary: salary !== undefined && salary !== '' ? parseFloat(salary) : null,
+      salary: salary !== undefined && salary !== "" ? parseFloat(salary) : null,
       address: address || null,
       emergency_contact_name: emergency_contact_name || null,
       emergency_contact_phone: emergency_contact_phone || null,
       date_of_joining: date_of_joining ? new Date(date_of_joining) : new Date(),
-      status: 'active',
-      password_hash: passwordHash
-      
+      status: "active",
+      password_hash: passwordHash,
     });
 
     await employee.save();
 
-    // NOTE: For security, we don't return the plain password.
-    // If you want to email the default password to the user, integrate an email-sending service here.
-    return res.status(201).json({
-      message: 'Employee created',
-      employee_id: employee.employee_id,
-      note: 'Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).'
-    });
+    const resetLink = `${FRONTEND_URL}/reset-password/${employee.employee_id}`;
 
+    // Send onboarding email
+    try {
+      if (ONBOARDING_TEMPLATE_ID) {
+        await sendEmail(ONBOARDING_TEMPLATE_ID, {
+          first_name,
+          last_name,
+          email,
+          employee_id: employee.employee_id,
+          reset_link: resetLink,
+        });
+      }
+    } catch (emailError) {
+      console.error("Error sending onboarding email:", emailError);
+    }
+
+    return res.status(201).json({
+      message: "Employee created",
+      employee_id: employee.employee_id,
+      reset_link: resetLink,
+      email_sent: !!ONBOARDING_TEMPLATE_ID,
+      note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
+    });
   } catch (err) {
-    console.error('Error creating employee:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error creating employee:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
 exports.getEmployees = async (req, res) => {
   try {
-    const list = await Employee.find().select('-password_hash').lean();
+    const list = await Employee.find().select("-password_hash").lean();
     return res.json(list);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
 exports.getEmployee = async (req, res) => {
   try {
-    const emp = await Employee.findOne({ employee_id: req.params.employeeId }).select('-password_hash').lean();
-    if (!emp) return res.status(404).json({ message: 'Not found' });
+    const emp = await Employee.findOne({ employee_id: req.params.employeeId })
+      .select("-password_hash")
+      .lean();
+    if (!emp) return res.status(404).json({ message: "Not found" });
     return res.json(emp);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 // ✅ Update employee by ID
 exports.updateEmployee = async (req, res) => {
@@ -128,8 +163,8 @@ exports.updateEmployee = async (req, res) => {
       updates.password_hash = hashed;
       delete updates.password; // remove plain password
     }
-   
-   const updatedEmployee = await Employee.findByIdAndUpdate(
+
+    const updatedEmployee = await Employee.findByIdAndUpdate(
       employeeId,
       updates,
       { new: true, runValidators: true }
@@ -141,6 +176,8 @@ exports.updateEmployee = async (req, res) => {
 
     res.status(200).json(updatedEmployee);
   } catch (error) {
-    res.status(400).json({ message: "Error updating employee", error: error.message });
+    res
+      .status(400)
+      .json({ message: "Error updating employee", error: error.message });
   }
 };

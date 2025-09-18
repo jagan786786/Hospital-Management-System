@@ -23,6 +23,7 @@ import LoginPage from "./pages/LoginPage";
 import NotAuthenticated from "./components/NotAuthenticated";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ResetPasswordPage from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
 
   // Pages where we DON'T want sidebar & header
-  const noSidebarRoutes = ["/login", "/unauthorized"];
+  const noSidebarRoutes = ["/login", "/unauthorized","/reset-password"];
 
   const hideSidebar = noSidebarRoutes.includes(location.pathname);
 
@@ -69,6 +70,7 @@ const App = () => (
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/unauthorized" element={<NotAuthenticated />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route
                   path="/"
                   element={
