@@ -48,11 +48,9 @@ exports.createEmployee = async (req, res) => {
           .json({ message: "An employee with this email already exists" });
       }
       if (existing.phone === phone) {
-        return res
-          .status(409)
-          .json({
-            message: "An employee with this phone number already exists",
-          });
+        return res.status(409).json({
+          message: "An employee with this phone number already exists",
+        });
       }
       return res.status(409).json({ message: "Duplicate employee" });
     }
@@ -104,9 +102,9 @@ exports.createEmployee = async (req, res) => {
     try {
       if (ONBOARDING_TEMPLATE_ID) {
         await sendEmail(ONBOARDING_TEMPLATE_ID, {
-          first_name,
-          last_name,
-          email,
+          first_name: employee.first_name,
+          last_name: employee.last_name,
+          email: employee.email, 
           employee_id: employee.employee_id,
           reset_link: resetLink,
         });
