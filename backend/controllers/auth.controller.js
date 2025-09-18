@@ -31,11 +31,13 @@ const generateRefreshToken = async (payload) => {
 };
 
 // LOGIN (email or phone)
+// LOGIN (email or phone)
 exports.login = async (req, res) => {
   const { identifier, password } = req.body;
+  console.log("Backend received:", req.body);
 
   try {
-    let user, role, userType, fullName;
+    let user, roles, userType, fullName;
 
     // Try Employee
     user = await Employee.findOne({
@@ -43,11 +45,16 @@ exports.login = async (req, res) => {
     });
 
     if (user) {
+      console.log("Found employee:", user.email, "Hash:", user.password_hash);
       const valid = await comparePassword(password, user.password_hash);
-      if (!valid)
-        return res.status(401).json({ message: "Invalid credentials" });
+      console.log("Compare result:", valid);
 
-      role = user.employee_type;
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // ✅ keep all roles as array of IDs
+      roles = user.employee_type || [];
       userType = "employee";
       fullName = `${user.first_name} ${user.last_name}`;
     } else {
@@ -55,27 +62,44 @@ exports.login = async (req, res) => {
       user = await Patient.findOne({
         $or: [{ email: identifier }, { phone: identifier }],
       });
+      console.log(user);
 
-      if (!user)
+      if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
+      }
 
       const valid = await user.comparePassword(password);
-      if (!valid)
-        return res.status(401).json({ message: "Invalid credentials" });
+      console.log(valid);
 
-      role = "Patient";
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Patients don’t have multiple roles
+      roles = ["Patient"];
       userType = "patient";
       fullName = `${user.first_name} ${user.last_name}`;
     }
 
-    const payload = { id: user._id, role, type: userType, name: fullName };
+    const payload = {
+      id: user._id,
+      roles, // ✅ send array of roles
+      type: userType,
+      name: fullName,
+    };
+
     const accessToken = generateAccessToken(payload);
     const refreshToken = await generateRefreshToken(payload);
 
+    console.log(payload);
+    console.log(accessToken);
+    console.log(refreshToken);
+
     res.json({
+      id: user._id,
       accessToken,
       refreshToken,
-      role,
+      roles, // ✅ return array
       name: fullName,
       type: userType,
     });
