@@ -8,7 +8,7 @@ export const createEmployee = async (employeeData: any) => {
 
 // (Optional) Fetch all employees
 export const getEmployees = async () => {
-  const response = await api.get("/employees");
+  const response = await api.get("/employees/getEmployees");
   return response.data;
 };
 
@@ -20,7 +20,7 @@ export const getEmployeeById = async (id: string) => {
 
 // (Optional) Update employee
 export const updateEmployee = async (id: string, employeeData: any) => {
-  const response = await api.put(`/employees/${id}`, employeeData);
+  const response = await api.put(`/employees/updateEmployee/${id}`, employeeData);
   return response.data;
 };
 
@@ -33,5 +33,12 @@ export const deleteEmployee = async (id: string) => {
 // Fetch roles
 export const getRoles = async () => {
   const response = await api.get("/roles/getRoles");
+  return response.data;
+};
+
+// ✅ Toggle employee status
+export const toggleEmployeeStatus = async (id: string, currentStatus: string) => {
+  const newStatus = currentStatus === "active" ? "inactive" : "active";
+  const response = await api.put(`/employees/updateEmployee/${id}`, { status: newStatus });
   return response.data;
 };

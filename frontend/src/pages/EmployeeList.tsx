@@ -2,46 +2,30 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Users, Edit, UserCheck, UserX, Building2, Phone, Mail, Calendar } from "lucide-react";
+import { Employee } from "@/types/employee";
 import { format } from "date-fns";
 import { usePagination } from "@/hooks/usePagination";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { getEmployees, updateEmployee } from "@/api/services/employeService";
 
-interface Employee {
-  id: string;
-  employee_id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  employee_type: string;
-  department: string | null;
-  date_of_joining: string;
-  salary: number | null;
-  address: string | null;
-  emergency_contact_name: string | null;
-  emergency_contact_phone: string | null;
-  status: 'active' | 'inactive';
-  created_at: string;
-}
 
 const employeeSchema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters"),
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  employee_type: z.enum(["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"]),
+  employee_type: z.array(z.string()).optional(), // ⬅️ array for multiple roles
   department: z.string().optional(),
   salary: z.string().optional(),
   address: z.string().optional(),
@@ -53,7 +37,13 @@ const employeeSchema = z.object({
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const employeeTypes = [
-  "Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"
+  "Nurse",
+  "Receptionist",
+  "Doctor",
+  "Admin",
+  "Accountant",
+  "House Help",
+  "Floor Warden",
 ];
 
 export default function EmployeeList() {
@@ -72,21 +62,11 @@ export default function EmployeeList() {
 
   const fetchEmployees = async () => {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching employees:', error);
-        toast.error("Failed to fetch employees");
-        return;
-      }
-
-      setEmployees((data || []) as Employee[]);
+      const data = await getEmployees(); // ✅ Uses API endpoint
+      setEmployees(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Unexpected error:', error);
-      toast.error("An unexpected error occurred");
+      console.error("Error fetching employees:", error);
+      toast.error("Failed to fetch employees");
     } finally {
       setLoading(false);
     }
@@ -97,20 +77,17 @@ export default function EmployeeList() {
   }, []);
 
   const toggleEmployeeStatus = async (employee: Employee) => {
-    const newStatus = employee.status === 'active' ? 'inactive' : 'active';
-    
-    const { error } = await supabase
-      .from('employees')
-      .update({ status: newStatus })
-      .eq('id', employee.id);
-
-    if (error) {
+    const newStatus = employee.status === "active" ? "inactive" : "active";
+    try {
+      await updateEmployee(employee._id, { status: newStatus }); // ✅ API call
+      toast.success(
+        `Employee ${employee.status === "active" ? "deactivated" : "activated"} successfully`
+      );
+      fetchEmployees();
+    } catch (error) {
+      console.error("Error updating status:", error);
       toast.error("Failed to update employee status");
-      return;
     }
-
-    toast.success(`Employee ${employee.status === 'active' ? 'deactivated' : 'activated'} successfully`);
-    fetchEmployees();
   };
 
   const openEditDialog = (employee: Employee) => {
@@ -136,65 +113,27 @@ export default function EmployeeList() {
 
     setIsSubmitting(true);
     try {
-      // Check for existing email or phone (excluding current employee)
-      const { data: existingEmployee, error: checkError } = await supabase
-        .from('employees')
-        .select('id, email, phone')
-        .or(`email.eq.${data.email},phone.eq.${data.phone}`)
-        .neq('id', editingEmployee.id)
-        .single();
-
-      if (existingEmployee && !checkError) {
-        if (existingEmployee.email === data.email) {
-          toast.error("Another employee with this email already exists");
-          return;
-        }
-        if (existingEmployee.phone === data.phone) {
-          toast.error("Another employee with this phone number already exists");
-          return;
-        }
-      }
-
-      const { error } = await supabase
-        .from('employees')
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          email: data.email,
-          phone: data.phone,
-          employee_type: data.employee_type,
-          department: data.department || null,
-          salary: data.salary ? parseFloat(data.salary) : null,
-          address: data.address || null,
-          emergency_contact_name: data.emergency_contact_name || null,
-          emergency_contact_phone: data.emergency_contact_phone || null,
-          date_of_joining: data.date_of_joining || editingEmployee.date_of_joining,
-        })
-        .eq('id', editingEmployee.id);
-
-      if (error) {
-        console.error('Error updating employee:', error);
-        if (error.code === '23505') {
-          if (error.message.includes('email')) {
-            toast.error("Another employee with this email already exists");
-          } else if (error.message.includes('phone')) {
-            toast.error("Another employee with this phone number already exists");
-          } else {
-            toast.error("A duplicate record exists");
-          }
-        } else {
-          toast.error("Failed to update employee record");
-        }
-        return;
-      }
+      await updateEmployee(editingEmployee._id, {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        phone: data.phone,
+        employee_type: data.employee_type,
+        department: data.department || null,
+        salary: data.salary ? parseFloat(data.salary) : null,
+        address: data.address || null,
+        emergency_contact_name: data.emergency_contact_name || null,
+        emergency_contact_phone: data.emergency_contact_phone || null,
+        date_of_joining: data.date_of_joining || editingEmployee.date_of_joining,
+      });
 
       toast.success("Employee updated successfully!");
       setIsDialogOpen(false);
       setEditingEmployee(null);
       fetchEmployees();
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      toast.error("An unexpected error occurred");
+    } catch (error: any) {
+      console.error("Error updating employee:", error);
+      toast.error(error.message || "Failed to update employee record");
     } finally {
       setIsSubmitting(false);
     }
@@ -249,10 +188,8 @@ export default function EmployeeList() {
               </TableHeader>
               <TableBody>
                 {pagination.paginatedData.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell className="font-mono text-sm">
-                      {employee.employee_id}
-                    </TableCell>
+                  <TableRow key={employee._id}>
+                    <TableCell className="font-mono text-sm">{employee.employee_id}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -279,13 +216,11 @@ export default function EmployeeList() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="w-3 h-3" />
-                        {format(new Date(employee.date_of_joining), 'MMM dd, yyyy')}
+                        {format(new Date(employee.date_of_joining), "MMM dd, yyyy")}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={employee.status === 'active' ? 'default' : 'secondary'}
-                      >
+                      <Badge variant={employee.status === "active" ? "default" : "secondary"}>
                         {employee.status}
                       </Badge>
                     </TableCell>
@@ -299,11 +234,11 @@ export default function EmployeeList() {
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
-                          variant={employee.status === 'active' ? 'destructive' : 'default'}
+                          variant={employee.status === "active" ? "destructive" : "default"}
                           size="sm"
                           onClick={() => toggleEmployeeStatus(employee)}
                         >
-                          {employee.status === 'active' ? (
+                          {employee.status === "active" ? (
                             <UserX className="w-4 h-4" />
                           ) : (
                             <UserCheck className="w-4 h-4" />
@@ -315,10 +250,7 @@ export default function EmployeeList() {
                 ))}
               </TableBody>
             </Table>
-            <TablePagination 
-              {...pagination}
-              onPageSizeChange={(size) => setPageSize(size)}
-            />
+            <TablePagination {...pagination} onPageSizeChange={(size) => setPageSize(size)} />
           </div>
         </CardContent>
       </Card>
@@ -333,7 +265,10 @@ export default function EmployeeList() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
               <FormField
                 control={form.control}
                 name="first_name"
@@ -502,9 +437,9 @@ export default function EmployeeList() {
               </div>
 
               <div className="md:col-span-2 flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsDialogOpen(false)}
                   className="flex-1"
                 >
