@@ -16,6 +16,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { cache } from "@/lib/cache";
 import { TableSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
 import { MedicineDetailDialog } from "@/components/medical/MedicineDetailDialog";
+import { getInventory } from "@/api/services/inventory";
 
 type Medicine = {
   id: string;
@@ -50,6 +51,7 @@ type Transaction = {
 };
 
 export default function MedicineStock() {
+
   const [searchTerm, setSearchTerm] = useState("");
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -83,6 +85,7 @@ export default function MedicineStock() {
   });
 
   useEffect(() => {
+
     fetchMedicines();
     fetchTransactions();
     
@@ -112,52 +115,42 @@ export default function MedicineStock() {
     };
   }, []);
 
-  const fetchMedicines = async () => {
-    const cacheKey = 'medicine-inventory';
-    
-    // Check cache first
-    const cachedData = cache.get<Medicine[]>(cacheKey);
-    if (cachedData) {
-      console.log("MedicineStock: Using cached medicines:", cachedData.length);
-      setMedicines(cachedData);
-      return;
-    }
+    const fetchMedicines = async () => {
+      try {
+        const data = await getInventory();
+        console.log("Fetched medicines from API:", data);
 
-    const { data, error } = await supabase
-      .from('medicine_inventory')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      toast({ title: "Error", description: "Failed to fetch medicines", variant: "destructive" });
-    } else {
-      const mapped = (data || []).map((row: any) => ({
-        id: row.id,
-        medicine_id: row.medicine_id,
-        name: row.name,
-        generic_name: row.generic_name,
-        strength: row.strength,
-        form: row.form,
-        manufacturer: row.manufacturer,
-        stock_quantity: row.stock_quantity ?? 0,
-        expiry_date: row.expiry_date,
-        batch_number: row.batch_number,
-        storage_requirements: row.storage_requirements,
-        reorder_level: row.reorder_level,
-        location_shelf_number: row.location_shelf_number,
-        side_effects: row.side_effects,
-        usage_instructions: row.usage_instructions,
-        common_complaints: row.common_complaints ?? [],
-        active: row.active ?? true,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-      })) as Medicine[];
-      
-      // Cache for 5 minutes
-      cache.set(cacheKey, mapped, 300000);
-      setMedicines(mapped);
-    }
-  };
+        const mapped = (data || []).map((row: any) => ({
+          id: row._id, // since MongoDB uses _id
+          medicine_id: row._id,
+          name: row.brand_name,  // Need to look at this if its not replicating 
+          generic_name: row.generic_name,
+          strength: row.strength,
+          form: row.form,
+          manufacturer: row.manufacturer,
+          stock_quantity: row.quantity_available ?? 0,
+          expiry_date: row.expiry_date,
+          batch_number: row.batch_number,
+          storage_requirements: row.storage_conditions,
+          reorder_level: row.reorder_level,
+          location_shelf_number: row.location_code,
+          side_effects: row.side_effects,
+          usage_instructions: row.usage_instructions,
+          common_complaints: row.common_complaints ?? [],
+          active: row.active ?? true,
+          created_at: row.createdAt,
+        })) as Medicine[];
+
+        setMedicines(mapped);
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch medicines",
+          variant: "destructive",
+        });
+      }
+    };
 
   const fetchTransactions = async () => {
     const { data, error } = await supabase
@@ -275,6 +268,7 @@ export default function MedicineStock() {
     }
   };
 
+  console.log("There is a medicine", medicines);
   const filteredMedicines = medicines.filter(medicine =>
     medicine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     medicine.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())
