@@ -678,24 +678,43 @@
                 "$ref": "#/components/schemas/Inventory"
               },
               "example": {
-                "brand_name": "Paracetamol",
-                "generic_name": "Acetaminophen",
+                "brand_name": "Crocin",
+                "generic_name": "Paracetamol",
                 "drug_category": "Analgesic",
                 "form": "Tablet",
                 "strength": "500mg",
-                "batch_number": "BATCH123",
-                "expiry_date": "2025-12-31",
-                "quantity_available": 100,
-                "reorder_level": 20,
-                "supplier": "MediCorp Pvt Ltd",
-                "purchase_date": "2023-09-01",
-                "purchase_price": 2.5,
-                "mrp": 5,
-                "selling_price": 4.5,
+                "drug_code": "DRG1001",
+                "unit_of_measure": "Box",
+                "pack_size": "10x10",
+                "conversion_factor": 1,
+                "batch_number": "B12345",
+                "lot_number": "L67890",
+                "manufacturing_date": "2024-06-01",
+                "expiry_date": "2026-05-31",
+                "quantity_available": 500,
+                "reorder_level": 100,
+                "max_stock_level": 2000,
+                "supplier": "MediCare Distributors",
+                "purchase_date": "2024-07-01",
+                "invoice_number": "INV-78945",
+                "purchase_price": 15,
+                "mrp": 20,
+                "selling_price": 18,
                 "tax_percent": 5,
-                "storage_conditions": "Store in a cool and dry place",
+                "storage_conditions": "Room temperature",
+                "location_code": "RACK-01-A",
                 "cold_chain_required": false,
-                "prescription_required": true
+                "is_controlled_substance": false,
+                "prescription_required": true,
+                "drug_license_number": "LIC123456",
+                "suppliers": [
+                  "68cd0b241433a82bd0c7ec37"
+                ],
+                "manufacturer": "GlaxoSmithKline",
+                "linked_to_billing": true,
+                "linked_to_emr": true,
+                "last_updated_by": "64c9f3d1a2b3c4d5e6f7a8b9",
+                "reason_for_adjustment": "Initial stock entry"
               }
             }
           }
@@ -804,8 +823,43 @@
                 "$ref": "#/components/schemas/Inventory"
               },
               "example": {
-                "quantity_available": 80,
-                "reason_for_adjustment": "Dispensed to patients"
+                "brand_name": "Crocin",
+                "generic_name": "Paracetamol",
+                "drug_category": "Analgesic",
+                "form": "Tablet",
+                "strength": "500mg",
+                "drug_code": "DRG1001",
+                "unit_of_measure": "Box",
+                "pack_size": "10x10",
+                "conversion_factor": 1,
+                "batch_number": "B12345",
+                "lot_number": "L67890",
+                "manufacturing_date": "2024-06-01",
+                "expiry_date": "2026-05-31",
+                "quantity_available": 500,
+                "reorder_level": 100,
+                "max_stock_level": 2000,
+                "supplier": "MediCare Distributors",
+                "purchase_date": "2024-07-01",
+                "invoice_number": "INV-78945",
+                "purchase_price": 15,
+                "mrp": 20,
+                "selling_price": 18,
+                "tax_percent": 5,
+                "storage_conditions": "Room temperature",
+                "location_code": "RACK-01-A",
+                "cold_chain_required": false,
+                "is_controlled_substance": false,
+                "prescription_required": true,
+                "drug_license_number": "LIC123456",
+                "suppliers": [
+                  "68cd0b241433a82bd0c7ec37"
+                ],
+                "manufacturer": "GlaxoSmithKline",
+                "linked_to_billing": true,
+                "linked_to_emr": true,
+                "last_updated_by": "64c9f3d1a2b3c4d5e6f7a8b9",
+                "reason_for_adjustment": "Initial stock entry"
               }
             }
           }
@@ -1478,6 +1532,401 @@
           },
           "404": {
             "description": "Role not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/email/createTemplate": {
+      "post": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Create a new email template",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "201": {
+            "description": "Email template created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTemplate"
+              },
+              "example": {
+                "from": "noreply@hospital.com",
+                "to": "{{email}}",
+                "subject": "Welcome Email",
+                "body": "Hello {{name}}, welcome to the Hospital Management System!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/email/getAllTemplates": {
+      "get": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Get all email templates",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Returns list of email templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmailTemplate"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/email/getTemplateById/{id}": {
+      "get": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Get an email template by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template details"
+          },
+          "404": {
+            "description": "Template not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/email/updateTemplate/{id}": {
+      "put": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Update an email template",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template updated successfully"
+          },
+          "404": {
+            "description": "Template not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTemplate"
+              },
+              "example": {
+                "subject": "Updated Subject",
+                "body": "Hello {{name}}, this is the updated email body."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/email/deleteTemplate/{id}": {
+      "delete": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Delete an email template",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template deleted successfully"
+          },
+          "404": {
+            "description": "Template not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/email/send": {
+      "post": {
+        "tags": [
+          "EmailTemplates"
+        ],
+        "summary": "Send an email using a template",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Email sent successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Email sending failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "templateId": {
+                    "type": "string",
+                    "example": "64df8a7d1f2b2c0012a34567"
+                  },
+                  "to": {
+                    "type": "string",
+                    "example": "patient@example.com"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "example": {
+                      "name": "John Doe",
+                      "appointment_date": "2023-10-15"
+                    }
+                  }
+                },
+                "required": [
+                  "templateId",
+                  "to"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier/createSupplier": {
+      "post": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Create a new supplier",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Supplier created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Supplier"
+              },
+              "example": {
+                "supplier_name": "MediCare Distributors",
+                "contact_person": "John Doe",
+                "phone": "9876543210",
+                "email": "contact@medicare.com",
+                "license_number": "LIC123456",
+                "address": "123 Pharma Street, City",
+                "gst_number": "29ABCDE1234F1Z5",
+                "is_active": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier/getSuppliers": {
+      "get": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Get all suppliers",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Returns a list of suppliers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Supplier"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/supplier/getSupplierById/{id}": {
+      "get": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Get a supplier by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplier ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier details returned"
+          },
+          "404": {
+            "description": "Supplier not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/supplier/updateSupplier/{id}": {
+      "put": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Update a supplier",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplier ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier updated successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Supplier not found"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Supplier"
+              },
+              "example": {
+                "phone": "9123456789",
+                "address": "New Pharma Market, Block 5"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supplier/deleteSupplier/{id}": {
+      "delete": {
+        "tags": [
+          "Suppliers"
+        ],
+        "summary": "Delete a supplier",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Supplier ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Supplier deleted successfully"
+          },
+          "404": {
+            "description": "Supplier not found"
           },
           "500": {
             "description": "Internal Server Error"

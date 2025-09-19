@@ -218,11 +218,17 @@ export type Database = {
           form: string | null
           generic_name: string | null
           id: string
+          location_shelf_number: string | null
           manufacturer: string | null
+          medicine_id: string | null
           name: string
+          reorder_level: number | null
+          side_effects: string | null
           stock_quantity: number
+          storage_requirements: string | null
           strength: string | null
           updated_at: string
+          usage_instructions: string | null
         }
         Insert: {
           active?: boolean
@@ -233,11 +239,17 @@ export type Database = {
           form?: string | null
           generic_name?: string | null
           id?: string
+          location_shelf_number?: string | null
           manufacturer?: string | null
+          medicine_id?: string | null
           name: string
+          reorder_level?: number | null
+          side_effects?: string | null
           stock_quantity?: number
+          storage_requirements?: string | null
           strength?: string | null
           updated_at?: string
+          usage_instructions?: string | null
         }
         Update: {
           active?: boolean
@@ -248,13 +260,58 @@ export type Database = {
           form?: string | null
           generic_name?: string | null
           id?: string
+          location_shelf_number?: string | null
           manufacturer?: string | null
+          medicine_id?: string | null
           name?: string
+          reorder_level?: number | null
+          side_effects?: string | null
           stock_quantity?: number
+          storage_requirements?: string | null
           strength?: string | null
           updated_at?: string
+          usage_instructions?: string | null
         }
         Relationships: []
+      }
+      medicine_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          medicine_id: string
+          price_per_unit: number | null
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medicine_id: string
+          price_per_unit?: number | null
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medicine_id?: string
+          price_per_unit?: number | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicine_suppliers_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicine_inventory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicine_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patients: {
         Row: {
@@ -389,45 +446,6 @@ export type Database = {
           },
         ]
       }
-      role: {
-        Row: {
-          created_at: string
-          id: number
-          role_name: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          role_name?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          role_name?: string | null
-        }
-        Relationships: []
-      }
-      role_access: {
-        Row: {
-          created_at: string
-          employee_id: number | null
-          id: number
-          role_id: number | null
-        }
-        Insert: {
-          created_at?: string
-          employee_id?: number | null
-          id?: number
-          role_id?: number | null
-        }
-        Update: {
-          created_at?: string
-          employee_id?: number | null
-          id?: number
-          role_id?: number | null
-        }
-        Relationships: []
-      }
       screen_permissions: {
         Row: {
           created_at: string | null
@@ -452,6 +470,42 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           screen_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          license_number: string | null
+          phone: string | null
+          supplier_id: string
+          supplier_name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          supplier_id: string
+          supplier_name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          supplier_id?: string
+          supplier_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -493,6 +547,14 @@ export type Database = {
         Returns: undefined
       }
       generate_employee_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_medicine_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_supplier_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

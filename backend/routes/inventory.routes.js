@@ -14,25 +14,50 @@ router.post(
         "application/json": {
           schema: { $ref: "#/components/schemas/Inventory" },
           example: {
-            brand_name: "Paracetamol",
-            generic_name: "Acetaminophen",
-            drug_category: "Analgesic",
-            form: "Tablet",
-            strength: "500mg",
-            batch_number: "BATCH123",
-            expiry_date: "2025-12-31",
-            quantity_available: 100,
-            reorder_level: 20,
-            supplier: "MediCorp Pvt Ltd",
-            purchase_date: "2023-09-01",
-            purchase_price: 2.5,
-            mrp: 5,
-            selling_price: 4.5,
-            tax_percent: 5,
-            storage_conditions: "Store in a cool and dry place",
-            cold_chain_required: false,
-            prescription_required: true
-          }
+              "brand_name": "Crocin",
+              "generic_name": "Paracetamol",
+              "drug_category": "Analgesic",
+              "form": "Tablet",
+              "strength": "500mg",
+              "drug_code": "DRG1001",
+
+              "unit_of_measure": "Box",
+              "pack_size": "10x10",
+              "conversion_factor": 1,
+
+              "batch_number": "B12345",
+              "lot_number": "L67890",
+              "manufacturing_date": "2024-06-01",
+              "expiry_date": "2026-05-31",
+              "quantity_available": 500,
+              "reorder_level": 100,
+              "max_stock_level": 2000,
+
+              "supplier": "MediCare Distributors",
+              "purchase_date": "2024-07-01",
+              "invoice_number": "INV-78945",
+              "purchase_price": 15.0,
+              "mrp": 20.0,
+              "selling_price": 18.0,
+              "tax_percent": 5,
+
+              "storage_conditions": "Room temperature",
+              "location_code": "RACK-01-A",
+              "cold_chain_required": false,
+
+              "is_controlled_substance": false,
+              "prescription_required": true,
+              "drug_license_number": "LIC123456",
+
+              "suppliers": ["68cd0b241433a82bd0c7ec37"],
+              "manufacturer": "GlaxoSmithKline",
+
+              "linked_to_billing": true,
+              "linked_to_emr": true,
+
+              "last_updated_by": "64c9f3d1a2b3c4d5e6f7a8b9",
+              "reason_for_adjustment": "Initial stock entry"
+            }
         }
       }
     }
@@ -105,7 +130,52 @@ router.put(
       content: {
         "application/json": {
           schema: { $ref: "#/components/schemas/Inventory" },
-          example: { quantity_available: 80, reason_for_adjustment: "Dispensed to patients" }
+          example: {
+              "brand_name": "Crocin",
+              "generic_name": "Paracetamol",
+              "drug_category": "Analgesic",
+              "form": "Tablet",
+              "strength": "500mg",
+              "drug_code": "DRG1001",
+
+              "unit_of_measure": "Box",
+              "pack_size": "10x10",
+              "conversion_factor": 1,
+
+              "batch_number": "B12345",
+              "lot_number": "L67890",
+              "manufacturing_date": "2024-06-01",
+              "expiry_date": "2026-05-31",
+              "quantity_available": 500,
+              "reorder_level": 100,
+              "max_stock_level": 2000,
+
+              "supplier": "MediCare Distributors",
+              "purchase_date": "2024-07-01",
+              "invoice_number": "INV-78945",
+              "purchase_price": 15.0,
+              "mrp": 20.0,
+              "selling_price": 18.0,
+              "tax_percent": 5,
+
+              "storage_conditions": "Room temperature",
+              "location_code": "RACK-01-A",
+              "cold_chain_required": false,
+
+              "is_controlled_substance": false,
+              "prescription_required": true,
+              "drug_license_number": "LIC123456",
+
+              "suppliers": ["68cd0b241433a82bd0c7ec37"],
+              "manufacturer": "GlaxoSmithKline",
+
+              "linked_to_billing": true,
+              "linked_to_emr": true,
+
+              "last_updated_by": "64c9f3d1a2b3c4d5e6f7a8b9",
+              "reason_for_adjustment": "Initial stock entry"
+            }
+
         }
       }
     }
