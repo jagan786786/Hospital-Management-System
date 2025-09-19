@@ -11,6 +11,8 @@ import { Edit, Package, Building2, AlertCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VendorManagement } from "./VendorManagement";
+import { updateInventory } from "@/api/services/inventory"; // add this import at top
+
 
 type Medicine = {
   id: string;
@@ -94,36 +96,69 @@ export function MedicineDetailDialog({ medicine, isOpen, onClose, onUpdate }: Me
   };
 
   const handleSave = async () => {
-    if (!editedMedicine) return;
+  if (!editedMedicine) return;
 
-    const { error } = await supabase
-      .from('medicine_inventory')
-      .update({
-        name: editedMedicine.name,
-        generic_name: editedMedicine.generic_name,
-        strength: editedMedicine.strength,
-        form: editedMedicine.form,
-        manufacturer: editedMedicine.manufacturer,
-        stock_quantity: editedMedicine.stock_quantity,
-        expiry_date: editedMedicine.expiry_date,
-        batch_number: editedMedicine.batch_number,
-        storage_requirements: editedMedicine.storage_requirements,
-        reorder_level: editedMedicine.reorder_level,
-        location_shelf_number: editedMedicine.location_shelf_number,
-        side_effects: editedMedicine.side_effects,
-        usage_instructions: editedMedicine.usage_instructions,
-        common_complaints: editedMedicine.common_complaints
-      })
-      .eq('id', editedMedicine.id);
+  try {
+    // ✅ Call API to update this inventory item
+    await updateInventory(editedMedicine.id, {
+      brand_name: editedMedicine.name,
+      generic_name: editedMedicine.generic_name,
+      strength: editedMedicine.strength,
+      form: editedMedicine.form,
+      manufacturer: editedMedicine.manufacturer,
+      quantity_available: editedMedicine.stock_quantity,
+      expiry_date: editedMedicine.expiry_date,
+      batch_number: editedMedicine.batch_number,
+      storage_conditions: editedMedicine.storage_requirements,
+      reorder_level: editedMedicine.reorder_level,
+      location_code: editedMedicine.location_shelf_number,
+      side_effects: editedMedicine.side_effects,
+      usage_instructions: editedMedicine.usage_instructions,
+      // map other fields from schema as needed
+    });
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to update medicine", variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Medicine updated successfully" });
-      setIsEditing(false);
-      onUpdate();
-    }
-  };
+    toast({ title: "Success", description: "Medicine updated successfully" });
+    setIsEditing(false);
+    onUpdate(); // refresh list in parent
+  } catch (error) {
+    toast({ title: "Error", description: "Failed to update medicine", variant: "destructive" });
+    console.error(error);
+  }
+};
+  
+  
+  
+  // const handleSave = async () => {
+  //   if (!editedMedicine) return;
+
+  //   const { error } = await supabase
+  //     .from('medicine_inventory')
+  //     .update({
+  //       name: editedMedicine.name,
+  //       generic_name: editedMedicine.generic_name,
+  //       strength: editedMedicine.strength,
+  //       form: editedMedicine.form,
+  //       manufacturer: editedMedicine.manufacturer,
+  //       stock_quantity: editedMedicine.stock_quantity,
+  //       expiry_date: editedMedicine.expiry_date,
+  //       batch_number: editedMedicine.batch_number,
+  //       storage_requirements: editedMedicine.storage_requirements,
+  //       reorder_level: editedMedicine.reorder_level,
+  //       location_shelf_number: editedMedicine.location_shelf_number,
+  //       side_effects: editedMedicine.side_effects,
+  //       usage_instructions: editedMedicine.usage_instructions,
+  //       common_complaints: editedMedicine.common_complaints
+  //     })
+  //     .eq('id', editedMedicine.id);
+
+  //   if (error) {
+  //     toast({ title: "Error", description: "Failed to update medicine", variant: "destructive" });
+  //   } else {
+  //     toast({ title: "Success", description: "Medicine updated successfully" });
+  //     setIsEditing(false);
+  //     onUpdate();
+  //   }
+  // };
 
   const getStatusBadge = (med: Medicine) => {
     const isExpired = med.expiry_date && new Date(med.expiry_date) < new Date();
@@ -315,7 +350,7 @@ export function MedicineDetailDialog({ medicine, isOpen, onClose, onUpdate }: Me
                   placeholder="Known side effects..."
                 />
               </div>
-              <div>
+              {/* <div>
                 <Label>Common Complaints</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {editedMedicine.common_complaints?.map((complaint, index) => (
@@ -335,7 +370,7 @@ export function MedicineDetailDialog({ medicine, isOpen, onClose, onUpdate }: Me
                     })}
                   />
                 )}
-              </div>
+              </div> */}
             </CardContent>
           </Card>
 

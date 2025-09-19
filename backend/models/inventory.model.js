@@ -40,6 +40,9 @@ const inventorySchema = new mongoose.Schema(
     // New Fields
     suppliers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Supplier" }], 
     manufacturer: { type: String },
+    usage_instructions:{ type: String },
+    side_effects:{ type: String },
+
 
     linked_to_billing: { type: Boolean, default: true },
     linked_to_emr: { type: Boolean, default: true },
