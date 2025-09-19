@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Package, AlertTriangle, Plus, Download, Filter, ArrowUpCircle, ArrowDownCircle, Edit } from "lucide-react";
+import { Search, Package, AlertTriangle, Plus, Download, Filter, ArrowUpCircle, ArrowDownCircle, Edit, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -15,17 +15,24 @@ import { usePagination } from "@/hooks/usePagination";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { cache } from "@/lib/cache";
 import { TableSkeleton, StatsSkeleton } from "@/components/LoadingSkeleton";
+import { MedicineDetailDialog } from "@/components/medical/MedicineDetailDialog";
 
 type Medicine = {
   id: string;
+  medicine_id?: string;
   name: string;
   generic_name?: string;
-  strength: string;
-  form: string;
-  manufacturer: string;
+  strength?: string;
+  form?: string;
+  manufacturer?: string;
   stock_quantity: number;
   expiry_date?: string;
   batch_number?: string;
+  storage_requirements?: string;
+  reorder_level?: number;
+  location_shelf_number?: string;
+  side_effects?: string;
+  usage_instructions?: string;
   common_complaints: string[];
   active: boolean;
   created_at?: string;
@@ -55,6 +62,8 @@ export default function MedicineStock() {
   
   // Add Medicine dialog state
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [selectedMedicineDetail, setSelectedMedicineDetail] = useState<Medicine | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [newMed, setNewMed] = useState({
     name: '',
     generic_name: '',
@@ -64,6 +73,11 @@ export default function MedicineStock() {
     stock_quantity: '',
     expiry_date: '',
     batch_number: '',
+    storage_requirements: '',
+    reorder_level: '',
+    location_shelf_number: '',
+    side_effects: '',
+    usage_instructions: '',
     common_complaints: '',
     active: true,
   });
@@ -119,16 +133,22 @@ export default function MedicineStock() {
     } else {
       const mapped = (data || []).map((row: any) => ({
         id: row.id,
+        medicine_id: row.medicine_id,
         name: row.name,
-        generic_name: row.generic_name ?? '',
-        strength: row.strength ?? '',
-        form: row.form ?? '',
-        manufacturer: row.manufacturer ?? '',
+        generic_name: row.generic_name,
+        strength: row.strength,
+        form: row.form,
+        manufacturer: row.manufacturer,
         stock_quantity: row.stock_quantity ?? 0,
-        expiry_date: row.expiry_date ?? undefined,
-        batch_number: row.batch_number ?? undefined,
+        expiry_date: row.expiry_date,
+        batch_number: row.batch_number,
+        storage_requirements: row.storage_requirements,
+        reorder_level: row.reorder_level,
+        location_shelf_number: row.location_shelf_number,
+        side_effects: row.side_effects,
+        usage_instructions: row.usage_instructions,
         common_complaints: row.common_complaints ?? [],
-        active: (row as any).active ?? true,
+        active: row.active ?? true,
         created_at: row.created_at,
         updated_at: row.updated_at,
       })) as Medicine[];
@@ -234,7 +254,23 @@ export default function MedicineStock() {
     } else {
       toast({ title: 'Success', description: 'Medicine created successfully' });
       setIsAddOpen(false);
-      setNewMed({ name: '', generic_name: '', strength: '', form: 'Tablet', manufacturer: '', stock_quantity: '', expiry_date: '', batch_number: '', common_complaints: '', active: true });
+      setNewMed({ 
+        name: '', 
+        generic_name: '', 
+        strength: '', 
+        form: 'Tablet', 
+        manufacturer: '', 
+        stock_quantity: '', 
+        expiry_date: '', 
+        batch_number: '', 
+        storage_requirements: '', 
+        reorder_level: '', 
+        location_shelf_number: '', 
+        side_effects: '', 
+        usage_instructions: '', 
+        common_complaints: '', 
+        active: true 
+      });
       fetchMedicines();
     }
   };
@@ -248,18 +284,22 @@ export default function MedicineStock() {
   const pagination = usePagination(sortedData, pageSize);
 
   const getStatusBadge = (medicine: Medicine) => {
+    if (medicine.stock_quantity === 0) {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    }
     const isExpired = medicine.expiry_date && new Date(medicine.expiry_date) < new Date();
     if (isExpired) {
-      return <Badge className="bg-destructive text-destructive-foreground">Expired</Badge>;
+      return <Badge variant="destructive">Expired</Badge>;
     }
-    if (medicine.stock_quantity <= 10) {
-      return <Badge className="bg-warning text-warning-foreground">Low Stock</Badge>;
+    if (medicine.stock_quantity <= (medicine.reorder_level || 10)) {
+      return <Badge variant="secondary" className="bg-yellow-500 text-white">Low Stock</Badge>;
     }
-    return <Badge className="bg-success text-success-foreground">In Stock</Badge>;
+    return <Badge variant="default" className="bg-green-500 text-white">In Stock</Badge>;
   };
 
-  const lowStockCount = medicines.filter(m => m.stock_quantity <= 10 && (!m.expiry_date || new Date(m.expiry_date) >= new Date())).length;
+  const lowStockCount = medicines.filter(m => m.stock_quantity > 0 && m.stock_quantity <= (m.reorder_level || 10) && (!m.expiry_date || new Date(m.expiry_date) >= new Date())).length;
   const expiredCount = medicines.filter(m => m.expiry_date && new Date(m.expiry_date) < new Date()).length;
+  const outOfStockCount = medicines.filter(m => m.stock_quantity === 0).length;
 
   return (
     <div className="flex-1 space-y-6 p-8">
@@ -357,7 +397,7 @@ export default function MedicineStock() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-success">
-              {medicines.filter(m => m.stock_quantity > 10 && (!m.expiry_date || new Date(m.expiry_date) >= new Date())).length}
+              {medicines.filter(m => m.stock_quantity > (m.reorder_level || 10) && (!m.expiry_date || new Date(m.expiry_date) >= new Date())).length}
             </div>
           </CardContent>
         </Card>
@@ -527,17 +567,29 @@ export default function MedicineStock() {
                       />
                     </td>
                     <td className="py-4 px-4">
-                      <Dialog open={isDialogOpen && selectedMedicine?.id === medicine.id} onOpenChange={(open) => {
-                        setIsDialogOpen(open);
-                        if (open) setSelectedMedicine(medicine);
-                        else setSelectedMedicine(null);
-                      }}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4 mr-1" />
-                            Update
-                          </Button>
-                        </DialogTrigger>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedMedicineDetail(medicine);
+                            setIsDetailOpen(true);
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Dialog open={isDialogOpen && selectedMedicine?.id === medicine.id} onOpenChange={(open) => {
+                          setIsDialogOpen(open);
+                          if (open) setSelectedMedicine(medicine);
+                          else setSelectedMedicine(null);
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Update
+                            </Button>
+                          </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Update Stock: {medicine.name}</DialogTitle>
@@ -578,8 +630,9 @@ export default function MedicineStock() {
                               Record Transaction
                             </Button>
                           </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -592,6 +645,16 @@ export default function MedicineStock() {
           </div>
         </CardContent>
       </Card>
+      
+      <MedicineDetailDialog
+        medicine={selectedMedicineDetail}
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setSelectedMedicineDetail(null);
+        }}
+        onUpdate={fetchMedicines}
+      />
     </div>
   );
 }

@@ -37,6 +37,10 @@ const inventorySchema = new mongoose.Schema(
     prescription_required: { type: Boolean, default: true },
     drug_license_number: { type: String },
 
+    // New Fields
+    suppliers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Supplier" }], 
+    manufacturer: { type: String },
+
     linked_to_billing: { type: Boolean, default: true },
     linked_to_emr: { type: Boolean, default: true },
 

@@ -16,6 +16,7 @@ const prescriptionRoutes = require("./routes/prescription.routes");
 const roleRoutes = require("./routes/role.routes");
 const screenRoutes = require("./routes/screen.routes");
 const emailRoutes = require("./routes/email.routes");
+const supplierRoutes = require("./routes/supplier.routes");
 
 // Swagger docs
 const swaggerUi = require("swagger-ui-express");
@@ -48,5 +49,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/screen", screenRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/supplier", supplierRoutes);
 
 module.exports = app;
