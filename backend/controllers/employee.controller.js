@@ -4,6 +4,7 @@ const { generateEmployeeId } = require("../services/idService.service");
 const { hashPassword } = require("../utils/hash");
 const Role = require("../models/role.model"); // ✅ import Role model
 const { sendEmail } = require("../controllers/email.controller");
+const mongoose = require("mongoose");
 
 const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || "Employee@123";
 const EMPLOYEE_ID_PREFIX = process.env.EMPLOYEE_ID_PREFIX || "EMP";
@@ -139,16 +140,41 @@ exports.getEmployees = async (req, res) => {
 
 exports.getEmployee = async (req, res) => {
   try {
-    const emp = await Employee.findOne({ employee_id: req.params.employeeId })
+    const { employeeId } = req.params;
+
+    // Check if the parameter is a valid MongoDB ObjectId
+    const isObjectId = mongoose.Types.ObjectId.isValid(employeeId);
+
+    // Build query: either match employee_id or _id
+    const query = isObjectId
+      ? { $or: [{ employee_id: employeeId }, { _id: employeeId }] }
+      : { employee_id: employeeId };
+
+    const emp = await Employee.findOne(query)
       .select("-password_hash")
       .lean();
+
     if (!emp) return res.status(404).json({ message: "Not found" });
+
     return res.json(emp);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// exports.getEmployee = async (req, res) => {
+//   try {
+//     const emp = await Employee.findOne({ employee_id: req.params.employeeId })
+//       .select("-password_hash")
+//       .lean();
+//     if (!emp) return res.status(404).json({ message: "Not found" });
+//     return res.json(emp);
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 // ✅ Update employee by ID
 exports.updateEmployee = async (req, res) => {

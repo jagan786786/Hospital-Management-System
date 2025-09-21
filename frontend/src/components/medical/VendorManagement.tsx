@@ -6,11 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus, Users, Building } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { 
+  getSuppliers, 
+  createSupplier, 
+  deleteSupplier 
+} from "@/api/services/supplierService";
+import { updateInventory,getInventoryById} from "@/api/services/inventory";
+import { getSupplierById} from "@/api/services/supplierService";
 
 type Supplier = {
-  id: string;
+  _id: string;
   supplier_id: string;
   supplier_name: string;
   contact_person?: string;
@@ -54,139 +60,171 @@ export function VendorManagement({ medicineId, isOpen, onClose, onUpdate }: Vend
     }
   }, [isOpen, medicineId]);
 
+
+    // ✅ Fetch all suppliers
   const fetchSuppliers = async () => {
-    const { data, error } = await supabase
-      .from('suppliers')
-      .select('*')
-      .order('supplier_name');
-    
-    if (!error && data) {
+    try {
+      const data = await getSuppliers();
       setSuppliers(data);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to fetch suppliers", variant: "destructive" });
+      console.error(error);
     }
-  };
+   };
 
-  const fetchMedicineSuppliers = async () => {
-    const { data, error } = await supabase
-      .from('medicine_suppliers')
-      .select(`
-        id,
-        price_per_unit,
-        suppliers (
-          id,
-          supplier_id,
-          supplier_name,
-          contact_person,
-          phone,
-          email,
-          license_number
-        )
-      `)
-      .eq('medicine_id', medicineId);
+    const fetchMedicineSuppliers = async () => {
+  if (!medicineId) return;
 
-    if (!error && data) {
-      const formatted = data.map(item => ({
-        id: item.id,
-        supplier_id: item.suppliers.id,
-        price_per_unit: item.price_per_unit,
-        supplier: item.suppliers
-      })) as MedicineSupplier[];
-      setMedicineSuppliers(formatted);
-    }
-  };
+  try {
+    // 1️⃣ Get the inventory item
+    const inventoryItem = await getInventoryById(medicineId);
+    const supplierIds: string[] = inventoryItem.suppliers || [];
 
-  const generateSupplierId = () => {
-    // Simple generation for now
-    const count = suppliers.length + 1;
-    return `SUP${String(count).padStart(4, '0')}`;
-  };
+    // 2️⃣ Fetch full supplier details for each ID
+    const suppliersDetails = await Promise.all(
+      supplierIds.map(async (id) => {
+        const supplierData = await getSupplierById(id);
+        return supplierData;
+      })
+    );
 
+    // 3️⃣ Format for MedicineSupplier[]
+    const formatted: MedicineSupplier[] = suppliersDetails.map((s: any) => ({
+      id: s._id,                 // MongoDB _id as MedicineSupplier.id
+      supplier_id: s._id,        // Map _id here too
+    //  price_per_unit: null,      // Optional, set if you have price info elsewhere
+      supplier: {
+        _id: s._id,
+        supplier_id: s._id,               // optional alias
+        supplier_name: s.supplier_name,
+        contact_person: s.contact_person,
+        phone: s.phone,
+        email: s.email,
+        license_number: s.license_number
+      }
+    }));
+
+    // 4️⃣ Update state
+    setMedicineSuppliers(formatted);
+
+  } catch (error) {
+    toast({ title: "Error", description: "Failed to fetch suppliers", variant: "destructive" });
+    console.error(error);
+  }
+};
+
+
+
+ // ✅ Add new supplier
   const handleAddNewSupplier = async () => {
+    
     if (!newSupplier.supplier_name.trim()) {
       toast({ title: "Error", description: "Supplier name is required", variant: "destructive" });
       return;
     }
 
-    const supplierId = generateSupplierId();
-    
-    const { data, error } = await supabase
-      .from('suppliers')
-      .insert({
-        supplier_id: supplierId,
-        supplier_name: newSupplier.supplier_name,
-        contact_person: newSupplier.contact_person || null,
-        phone: newSupplier.phone || null,
-        email: newSupplier.email || null,
-        license_number: newSupplier.license_number || null
-      })
-      .select()
-      .single();
+    try {
+      await createSupplier(newSupplier);
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to create supplier", variant: "destructive" });
-      return;
-    }
-
-    toast({ title: "Success", description: "Supplier created successfully" });
-    setNewSupplier({
-      supplier_name: '',
-      contact_person: '',
-      phone: '',
-      email: '',
-      license_number: ''
-    });
-    setIsAddingNew(false);
-    fetchSuppliers();
-  };
-
-  const handleAssignSupplier = async () => {
-    if (!selectedSupplierId) {
-      toast({ title: "Error", description: "Please select a supplier", variant: "destructive" });
-      return;
-    }
-
-    // Check if supplier already assigned
-    const alreadyAssigned = medicineSuppliers.some(ms => ms.supplier_id === selectedSupplierId);
-    if (alreadyAssigned) {
-      toast({ title: "Error", description: "Supplier already assigned to this medicine", variant: "destructive" });
-      return;
-    }
-
-    const { error } = await supabase
-      .from('medicine_suppliers')
-      .insert({
-        medicine_id: medicineId,
-        supplier_id: selectedSupplierId,
-        price_per_unit: pricePerUnit ? parseFloat(pricePerUnit) : null
+      toast({ title: "Success", description: "Supplier created successfully" });
+      setNewSupplier({
+        supplier_name: '',
+        contact_person: '',
+        phone: '',
+        email: '',
+        license_number: ''
       });
-
-    if (error) {
-      toast({ title: "Error", description: "Failed to assign supplier", variant: "destructive" });
-      return;
+      setIsAddingNew(false);
+      fetchSuppliers();
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to create supplier", variant: "destructive" });
+      console.error(error);
     }
-
-    toast({ title: "Success", description: "Supplier assigned successfully" });
-    setSelectedSupplierId("");
-    setPricePerUnit("");
-    fetchMedicineSuppliers();
   };
 
-  const handleRemoveSupplier = async (medicineSupplierI: string) => {
-    const { error } = await supabase
-      .from('medicine_suppliers')
-      .delete()
-      .eq('id', medicineSupplierI);
 
-    if (error) {
+
+    const handleAssignSupplier = async () => {
+      if (!selectedSupplierId) {
+        toast({ title: "Error", description: "Please select a supplier", variant: "destructive" });
+        return;
+      }
+
+      const inventoryItem = await getInventoryById(medicineId);
+      // Prevent duplicate
+
+       // Check if supplier is already in the array
+      const alreadyAssigned = (inventoryItem.suppliers || []).includes(selectedSupplierId);
+      if (alreadyAssigned) {
+        toast({ title: "Error", description: "Supplier already assigned to this medicine", variant: "destructive" });
+        return;
+      }
+
+      try {
+        // Fetch current inventory item
+        const inventoryItem = await getInventoryById(medicineId);
+
+        // Add new supplier ID to suppliers array
+        const updatedSuppliers = [...(inventoryItem.suppliers || []), selectedSupplierId];
+
+        // Update inventory via API
+        await updateInventory(medicineId, { suppliers: updatedSuppliers });
+
+        toast({ title: "Success", description: "Supplier assigned successfully" });
+
+        // Reset inputs
+        setSelectedSupplierId("");
+        setPricePerUnit("");
+
+        // Refresh assigned suppliers in UI
+        fetchMedicineSuppliers();
+
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to assign supplier", variant: "destructive" });
+        console.error(error);
+      }
+    };
+
+   // ✅ Remove supplier (only from suppliers collection)
+
+  const handleRemoveSupplier = async (supplierId: string) => {
+    if (!medicineId) return;
+
+    try {
+      // 1️⃣ Get current inventory item
+      const inventoryItem = await getInventoryById(medicineId);
+      const currentSuppliers: string[] = inventoryItem.suppliers || [];
+
+      // 2️⃣ Remove the supplierId from the array
+      const updatedSuppliers = currentSuppliers.filter(id => id !== supplierId);
+
+      // 3️⃣ Call updateInventory API with the updated suppliers array
+      await updateInventory(medicineId, { suppliers: updatedSuppliers });
+
+      toast({ title: "Success", description: "Supplier removed successfully" });
+
+      // 4️⃣ Refresh the list in the component
+      fetchMedicineSuppliers();
+
+    } catch (error) {
       toast({ title: "Error", description: "Failed to remove supplier", variant: "destructive" });
-      return;
+      console.error(error);
     }
-
-    toast({ title: "Success", description: "Supplier removed successfully" });
-    fetchMedicineSuppliers();
   };
+
+  // const handleRemoveSupplier = async (supplierId: string) => {
+  //   try {
+  //     await deleteSupplier(supplierId);
+  //     toast({ title: "Success", description: "Supplier removed successfully" });
+  //     fetchSuppliers();
+  //   } catch (error) {
+  //     toast({ title: "Error", description: "Failed to remove supplier", variant: "destructive" });
+  //     console.error(error);
+  //   }
+  // };
 
   const availableSuppliers = suppliers.filter(
-    supplier => !medicineSuppliers.some(ms => ms.supplier_id === supplier.id)
+    supplier => !medicineSuppliers.some(ms => ms.supplier_id === supplier._id)
   );
 
   return (
@@ -215,14 +253,14 @@ export function VendorManagement({ medicineId, isOpen, onClose, onUpdate }: Vend
                     </SelectTrigger>
                     <SelectContent>
                       {availableSuppliers.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>
-                          {supplier.supplier_name} ({supplier.supplier_id})
+                        <SelectItem key={supplier._id} value={supplier._id}>
+                          {supplier.supplier_name} ({supplier._id})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                {/* <div>
                   <Label>Price per Unit ($)</Label>
                   <Input
                     type="number"
@@ -231,7 +269,7 @@ export function VendorManagement({ medicineId, isOpen, onClose, onUpdate }: Vend
                     onChange={(e) => setPricePerUnit(e.target.value)}
                     placeholder="0.00"
                   />
-                </div>
+                </div> */}
               </div>
               <Button onClick={handleAssignSupplier} disabled={!selectedSupplierId}>
                 Assign Supplier
@@ -325,7 +363,7 @@ export function VendorManagement({ medicineId, isOpen, onClose, onUpdate }: Vend
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h4 className="font-medium">{ms.supplier.supplier_name}</h4>
-                          <p className="text-sm text-muted-foreground">ID: {ms.supplier.supplier_id}</p>
+                          <p className="text-sm text-muted-foreground">ID: {ms.supplier._id}</p>
                           {ms.supplier.contact_person && (
                             <p className="text-sm text-muted-foreground">Contact: {ms.supplier.contact_person}</p>
                           )}
