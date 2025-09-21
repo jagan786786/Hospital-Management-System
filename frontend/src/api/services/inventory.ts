@@ -8,7 +8,7 @@ export const getInventory = async () => {
 
 // ✅ Fetch a single inventory item by ID
 export const getInventoryById = async (id: string) => {
-  const response = await api.get(`/inventory/getInventorById/${id}`);
+  const response = await api.get(`/inventory/getInventoryById/${id}`);
   return response.data;
 };
 
