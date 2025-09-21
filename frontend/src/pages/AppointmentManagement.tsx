@@ -94,11 +94,17 @@ export default function AppointmentManagement() {
       patientData.forEach((p) => {
         if (p._id) patientMap.set(p._id, p);
       });
-
       const detailedAppointments: AppointmentWithDetails[] = await Promise.all(
         appointmentData.map(async (appt) => {
-          const patientDetail = patientMap.get(appt.patient)!;
-          const doctorDetail: Employee = await getEmployeeById(appt.doctor);
+          const patientDetail =
+            typeof appt.patient === "string"
+              ? patientMap.get(appt.patient)!
+              : (appt.patient as PatientRecord);
+
+          const doctorDetail: Employee =
+            typeof appt.doctor === "string"
+              ? await getEmployeeById(appt.doctor)
+              : (appt.doctor as Employee);
 
           return {
             ...appt,
