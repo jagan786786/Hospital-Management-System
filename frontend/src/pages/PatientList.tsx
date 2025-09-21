@@ -36,6 +36,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Employee } from "@/types/employee";
+import { PatientRecord } from "@/types/patient";
 
 export default function PatientList() {
   const navigate = useNavigate();
@@ -45,116 +47,119 @@ export default function PatientList() {
   const [isLoading, setIsLoading] = useState(true);
   const [pageSize, setPageSize] = useState(10);
 
-  const mockAppointments = [
-    {
-      id: "68c99cc411e3dcb66faf267b", // patient._id
-      appointmentId: "68cfa8a7c10bbbb777b92df9", // appointment._id
-      patientName: "Jagannath Patro",
-      age: -1, // DOB is in future (2025-10-02), so it shows -1, you can just hardcode like 28 for now
-      phone: "4567539510",
-      appointmentTime: "02:00 PM",
-      visitType: "Consultation",
-      department: "General", // from appointment
-      doctorName: "Jagan Patro", // from employee
-      specialization: "", // since specialization is null
-      status: "waiting", // mapped from Scheduled
-    },
-  ];
-
   // Fetch today's patients
   useEffect(() => {
     const fetchTodaysPatients = async () => {
       try {
         setIsLoading(true);
-        // const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-        // console.log("Today is", today);
+        console.log("Today is", today);
 
         //  Fetch all appointments
-        // const appointments: AppointmentInfo[] = await getAppointments();
-        // const todaysAppointments = appointments.filter((a) => {
-        //   const visitDate = new Date(a.visit_date).toISOString().split("T")[0];
-        //   return visitDate === today;
-        // });
-        // console.log("today patient", todaysAppointments);
+        const appointments: AppointmentInfo[] = await getAppointments();
+        const todaysAppointments = appointments.filter((a) => {
+          const visitDate = new Date(a.visit_date).toISOString().split("T")[0];
+          return visitDate === today;
+        });
+        console.log("today patient", todaysAppointments);
 
-        // if (!todaysAppointments.length) {
-        //   setPatientRows([]);
-        //   return;
-        // }
+        if (!todaysAppointments.length) {
+          setPatientRows([]);
+          return;
+        }
 
         //  Get unique patient & doctor IDs
-        // const patientIds = Array.from(
-        //   new Set(todaysAppointments.map((a) => a.patient))
-        // );
-        // const doctorIds = Array.from(
-        //   new Set(todaysAppointments.map((a) => a.doctor))
-        // );
+        const patientIds = Array.from(
+          new Set(
+            todaysAppointments.map((a) =>
+              typeof a.patient === "string"
+                ? a.patient
+                : (a.patient as PatientRecord)._id
+            )
+          )
+        );
+        const doctorIds = Array.from(
+          new Set(
+            todaysAppointments.map((a) =>
+              typeof a.doctor === "string"
+                ? a.doctor
+                : (a.doctor as Employee)._id
+            )
+          )
+        );
 
         //  Fetch patient & doctor details
-        // const allPatients = await getPatients(); // returns all patients
-        // const patients = allPatients.filter((p) => patientIds.includes(p._id));
-        // const doctors = await Promise.all(
-        //   doctorIds.map((id) => getEmployeeById(id))
-        // );
+        const allPatients = await getPatients(); // returns all patients
+        const patients = allPatients.filter((p) => patientIds.includes(p._id));
 
-        // const patientMap = new Map(patients.map((p) => [p._id, p]));
-        // const doctorMap = new Map(doctors.map((d) => [d._id, d]));
+        console.log("Appointment patient IDs:", patientIds);
+        console.log(
+          "All patients IDs:",
+          allPatients.map((p) => p._id)
+        );
 
-        //Map appointments to table rows
-        // const rows: PatientTableRow[] = todaysAppointments.map((a) => {
-        //   const patient = patientMap.get(a.patient)!;
-        //   const doctor = doctorMap.get(a.doctor)!;
+        const doctors = await Promise.all(
+          doctorIds.map((id) => getEmployeeById(id))
+        );
 
-        //   const age = patient.date_of_birth
-        //     ? new Date().getFullYear() -
-        //       new Date(patient.date_of_birth).getFullYear()
-        //     : 0;
+        const patientMap = new Map(patients.map((p) => [p._id, p]));
+        const doctorMap = new Map(doctors.map((d) => [d._id, d]));
 
-        //   let status: "waiting" | "in-progress" | "completed";
-        //   switch (a.status) {
-        //     case "In-Progress":
-        //       status = "in-progress";
-        //       break;
-        //     case "Completed":
-        //       status = "completed";
-        //       break;
-        //     default:
-        //       status = "waiting";
-        //   }
+        // Map appointments to table rows
+        const rows: PatientTableRow[] = todaysAppointments.map((a) => {
+          const patientId =
+            typeof a.patient === "string"
+              ? a.patient
+              : (a.patient as PatientRecord)._id;
 
-        //   return {
-        //     id: patient._id,
-        //     appointmentId: a._id,
-        //     patientName: `${patient.first_name} ${patient.last_name}`,
-        //     age,
-        //     phone: patient.phone || "",
-        //     appointmentTime: a.visit_time,
-        //     visitType: a.visit_type,
-        //     department: a.doctor_department,
-        //     doctorName: `${doctor.first_name} ${doctor.last_name}`,
-        //     specialization: (doctor as any).specialization || "",
-        //     status,
-        //   };
-        // });
+          console.log("Patientid is", patientId);
 
-        const mockAppointments: PatientTableRow[] = [
-          {
-            id: "68c99cc411e3dcb66faf267b",
-            appointmentId: "68cfa8a7c10bbbb777b92df9",
-            patientName: "Jagannath Patro",
-            age: 28, // hardcoded for now
-            phone: "4567539510",
-            appointmentTime: "02:00 PM",
-            visitType: "Consultation",
-            department: "General",
-            doctorName: "Jagan Patro",
-            specialization: "",
-            status: "waiting" as PatientTableRow["status"], // ✅ type-safe cast
-          },
-        ];
+          const doctorId =
+            typeof a.doctor === "string"
+              ? a.doctor
+              : (a.doctor as Employee)._id;
+          console.log("Doctorid is", doctorId);
 
-        setPatientRows(mockAppointments);
+          const patient = patientMap.get(patientId);
+          const doctor = doctorMap.get(doctorId);
+
+          console.log("Patients are", patient);
+          console.log("Doctors are", doctor);
+
+          const age = patient.date_of_birth
+            ? new Date().getFullYear() -
+              new Date(patient.date_of_birth).getFullYear()
+            : 0;
+
+          let status: "waiting" | "in-progress" | "completed";
+          switch (a.status) {
+            case "In-Progress":
+              status = "in-progress";
+              break;
+            case "Completed":
+              status = "completed";
+              break;
+            default:
+              status = "waiting";
+          }
+
+          return {
+            id: patient._id,
+            appointmentId: a._id,
+            patientName: `${patient.first_name} ${patient.last_name}`,
+            age,
+            phone: patient.phone || "",
+            appointmentTime: a.visit_time,
+            visitType: a.visit_type,
+            department: a.doctor_department,
+            doctorName: `${doctor.first_name} ${doctor.last_name}`,
+            specialization: (doctor as any).specialization || "",
+            status,
+          };
+        });
+
+        setPatientRows(rows);
       } catch (error) {
         console.error(error);
         toast.error("Failed to fetch today's patients");
@@ -203,7 +208,7 @@ export default function PatientList() {
       await updateAppointment(patient.appointmentId, { status: "Completed" });
       toast.success(`Completed consultation for ${patient.patientName}`);
       const today = new Date().toISOString().split("T")[0];
-      
+
       const refreshedAppointments = await getAppointments();
       setPatientRows(
         refreshedAppointments

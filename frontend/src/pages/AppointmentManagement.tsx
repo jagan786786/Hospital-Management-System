@@ -94,11 +94,17 @@ export default function AppointmentManagement() {
       patientData.forEach((p) => {
         if (p._id) patientMap.set(p._id, p);
       });
-
       const detailedAppointments: AppointmentWithDetails[] = await Promise.all(
         appointmentData.map(async (appt) => {
-          const patientDetail = patientMap.get(appt.patient)!;
-          const doctorDetail: Employee = await getEmployeeById(appt.doctor);
+          const patientDetail =
+            typeof appt.patient === "string"
+              ? patientMap.get(appt.patient)!
+              : (appt.patient as PatientRecord);
+
+          const doctorDetail: Employee =
+            typeof appt.doctor === "string"
+              ? await getEmployeeById(appt.doctor)
+              : (appt.doctor as Employee);
 
           return {
             ...appt,
@@ -216,20 +222,31 @@ export default function AppointmentManagement() {
     useSortable(filteredAppointments);
   const pagination = usePagination(sortedData, pageSize);
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString("en-US", {
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return ""; // fallback
+    return date.toLocaleDateString("en-US", {
       weekday: "short",
       year: "numeric",
       month: "short",
       day: "numeric",
     });
+  };
 
-  const formatTime = (timeStr: string) =>
-    new Date(`2000-01-01T${timeStr}`).toLocaleTimeString("en-US", {
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return "";
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return "";
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+
+    return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
+  };
 
   return (
     <div className="flex-1 space-y-6 p-8">
