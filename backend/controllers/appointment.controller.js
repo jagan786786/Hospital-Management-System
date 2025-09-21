@@ -13,11 +13,18 @@ exports.createAppointment = async (req, res) => {
       return res.status(400).json({ message: "Patient must be onboarded before creating appointment" });
     }
 
-    // check if doctor exists and is of type "Doctor"
-    const existingDoctor = await Employee.findById(doctor);
-    if (!existingDoctor || existingDoctor.employee_type !== "Doctor") {
+   // check if doctor exists + populate roles
+    const existingDoctor = await Employee.findById(doctor).populate("employee_type");
+    if (!existingDoctor) {
       return res.status(400).json({ message: "Invalid doctor selected" });
     }
+
+    // check if any of the roles is "Doctor"
+    const hasDoctorRole = existingDoctor.employee_type.some(role => role.name === "Doctor");
+    if (!hasDoctorRole) {
+      return res.status(400).json({ message: "Selected employee does not have Doctor role" });
+    }
+
 
     const appointment = new Appointment({
       patient,
