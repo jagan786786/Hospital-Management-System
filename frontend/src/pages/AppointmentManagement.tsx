@@ -230,12 +230,20 @@ export default function AppointmentManagement() {
       day: "numeric",
     });
 
-  const formatTime = (timeStr: string) =>
-    new Date(`2000-01-01T${timeStr}`).toLocaleTimeString("en-US", {
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return "";
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return "";
+
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+
+    return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
+  };
 
   return (
     <div className="flex-1 space-y-6 p-8">
