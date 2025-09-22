@@ -33,6 +33,8 @@ router.post('/createAppointment/',
   
   
   appointmentController.createAppointment);
+
+
 router.get('/getAppointments/', 
   
   /* 
@@ -53,6 +55,8 @@ router.get('/getAppointments/',
   
   
   appointmentController.getAppointments);
+
+
 router.get('/getAppointmentById/:id', 
   
     /* 
@@ -77,6 +81,8 @@ router.get('/getAppointmentById/:id',
   
   
   appointmentController.getAppointmentById);
+
+
 router.put('/updateAppointment/:id', 
   
   /* 
@@ -102,6 +108,8 @@ router.put('/updateAppointment/:id',
   */
   
   appointmentController.updateAppointment);
+
+
 router.delete('/deleteAppointment/:id',
   
    /* 
@@ -118,5 +126,45 @@ router.delete('/deleteAppointment/:id',
   */
  
   appointmentController.deleteAppointment);
+
+
+
+// Get appointments by doctor (with optional visit_date filter)
+router.get(
+  "/getAppointmentsByDoctor/:doctorId",
+  /*
+    #swagger.tags = ['Appointments']
+    #swagger.summary = 'Get all appointments of a specific doctor (optionally filter by visit date)'
+    #swagger.parameters['doctorId'] = {
+      in: 'query',
+      description: 'Doctor ID',
+      required: true,
+      type: 'string'
+    }
+    #swagger.parameters['visit_date'] = {
+      in: 'query',
+      description: 'Optional visit date (YYYY-MM-DD) to filter appointments for that day',
+      required: false,
+      type: 'string',
+      format: 'date'
+    }
+    #swagger.responses[200] = {
+      description: "List of appointments for the specified doctor",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: { $ref: "#/components/schemas/Appointment" }
+          }
+        }
+      }
+    }
+    #swagger.responses[400] = { description: "doctorId is required" }
+    #swagger.responses[500] = { description: "Error fetching doctor's appointments" }
+  */
+  appointmentController.getAppointmentsByDoctor
+);
+
+
 
 module.exports = router;

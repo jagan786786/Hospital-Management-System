@@ -112,3 +112,48 @@ exports.deleteAppointment = async (req, res) => {
     res.status(500).json({ message: "Error deleting appointment", error: error.message });
   }
 };
+
+
+// ✅ Get All appointments for a specific doctor, optionally filtered by visit_date
+
+exports.getAppointmentsByDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { visit_date } = req.query;
+
+    if (!doctorId) {
+      return res.status(400).json({ message: "doctorId is required" });
+    }
+
+    // Base filter by doctor._id
+    const query = { "doctor._id": doctorId };
+
+    // If visit_date provided, filter by day (ignore time)
+    if (visit_date) {
+      const startOfDay = new Date(visit_date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(visit_date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.visit_date = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    // Fetch with populations, so response matches your sample exactly
+    const appointments = await Appointment.find(query)
+      .populate("patient", "first_name last_name phone")
+      .populate({
+        path: "doctor",
+        select: "first_name last_name department employee_type",
+      });
+
+    // Send raw appointments array (same as your sample response)
+    res.status(200).json(appointments);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching doctor's appointments",
+      error: error.message,
+    });
+  }
+};
+

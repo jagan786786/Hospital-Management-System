@@ -655,6 +655,57 @@
         }
       }
     },
+    "/api/appointments/getAppointmentsByDoctor": {
+      "get": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Get all appointments of a specific doctor (optionally filter by visit date)",
+        "description": "",
+        "parameters": [
+          {
+            "name": "doctorId",
+            "in": "query",
+            "description": "Doctor ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "visit_date",
+            "in": "query",
+            "description": "Optional visit date (YYYY-MM-DD) to filter appointments for that day",
+            "required": false,
+            "format": "date",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of appointments for the specified doctor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "doctorId is required"
+          },
+          "500": {
+            "description": "Error fetching doctor's appointments"
+          }
+        }
+      }
+    },
     "/api/inventory/createInventory": {
       "post": {
         "tags": [

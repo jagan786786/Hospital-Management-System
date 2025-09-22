@@ -37,7 +37,7 @@ exports.createEmployee = async (req, res) => {
   } = req.body;
 
   try {
-    // 🔍 Duplicate check
+    // duplicate check
     const existing = await Employee.findOne({
       $or: [{ email }, { phone }],
     }).lean();
@@ -56,28 +56,17 @@ exports.createEmployee = async (req, res) => {
       return res.status(409).json({ message: "Duplicate employee" });
     }
 
-    // ✅ Validate primary role
-    if (!employee_type || !employee_type.primary_role_type) {
-      return res.status(400).json({ message: "Primary role is required" });
-    }
+    // ✅ Validate roles
+    let validRoles = [];
 
-    const primaryRole = await Role.findById(
-      employee_type.primary_role_type.role
-    );
-    if (!primaryRole) {
-      return res.status(400).json({ message: "Invalid primary role" });
-    }
-
-    // ✅ Validate secondary roles (if provided)
-    let secondaryRoles = [];
-    if (employee_type.secondary_role_type && employee_type.secondary_role_type.length > 0) {
-      const roleIds = employee_type.secondary_role_type.map((r) => r.role);
-      secondaryRoles = await Role.find({ _id: { $in: roleIds } }).select("_id");
-
-      if (secondaryRoles.length !== roleIds.length) {
+    if (Array.isArray(employee_type) && employee_type.length > 0) {
+      validRoles = await Role.find({ role_id: { $in: employee_type } }).select(
+        "role_id"
+      );
+      if (validRoles.length !== employee_type.length) {
         return res
           .status(400)
-          .json({ message: "One or more secondary roles are invalid" });
+          .json({ message: "One or more provided roles are invalid" });
       }
     }
 
@@ -86,7 +75,6 @@ exports.createEmployee = async (req, res) => {
       EMPLOYEE_ID_PREFIX,
       EMPLOYEE_ID_PADDING
     );
-
     // Hash default password
     const passwordHash = await hashPassword(DEFAULT_PASSWORD);
 
@@ -96,16 +84,7 @@ exports.createEmployee = async (req, res) => {
       last_name,
       email,
       phone,
-      employee_type: {
-        primary_role_type: {
-          role: primaryRole._id,
-          role_name: employee_type.primary_role_type.role_name,
-        },
-        secondary_role_type: (employee_type.secondary_role_type || []).map((r) => ({
-          role: r.role,
-          role_name: r.role_name,
-        })),
-      },
+      employee_type: validRoles.map((r) => r._id), // ✅ ensure only valid role IDs
       department: department || null,
       salary: salary !== undefined && salary !== "" ? parseFloat(salary) : null,
       address: address || null,
@@ -126,8 +105,8 @@ exports.createEmployee = async (req, res) => {
         note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
       });
 
-      // Send onboarding email (if template configured)
       const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
+
       try {
         if (ONBOARDING_TEMPLATE_ID) {
           await sendEmail(ONBOARDING_TEMPLATE_ID, {
@@ -137,6 +116,7 @@ exports.createEmployee = async (req, res) => {
             employee_id: employee.employee_id,
             reset_link: resetLink,
           });
+          emailSent = true;
         }
       } catch (emailError) {
         console.error("Error sending onboarding email:", emailError);
@@ -147,7 +127,6 @@ exports.createEmployee = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 exports.getEmployees = async (req, res) => {
   try {
