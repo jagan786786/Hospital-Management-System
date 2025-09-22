@@ -1,4 +1,4 @@
-import api from "../axios"; // Your axios instance
+import api from "../axios";
 import { AppointmentInfo } from "@/types/appointment";
 
 export const getAppointments = async (): Promise<AppointmentInfo[]> => {
