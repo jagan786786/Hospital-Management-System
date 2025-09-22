@@ -19,7 +19,7 @@ exports.createPrescription = async (req, res) => {
 
     // validate doctor
     const existingDoctor = await Employee.findById(doctor_id);
-    if (!existingDoctor || existingDoctor.employee_type !== "Doctor") {
+    if (!existingDoctor || existingDoctor.employee_type.primary_role_type.role_name !== "Doctor") {
       return res.status(400).json({ message: "Invalid doctor" });
     }
 

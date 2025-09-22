@@ -1,3 +1,14 @@
+export interface RoleType {
+  role: string;       // MongoDB ObjectId
+  role_name: string;  // Role name
+}
+
+export interface EmployeeType {
+  primary_role_type: RoleType;
+  secondary_role_type?: RoleType[];
+}
+
+
 export interface Employee {
   _id: string;
   employee_id: string;
@@ -5,7 +16,7 @@ export interface Employee {
   last_name: string;
   email: string;
   phone: string;
-  employee_type: string;
+  employee_type: EmployeeType;
   department: string | null;
   date_of_joining: string;
   salary: number | null;

@@ -97,7 +97,7 @@ export default function EmployeeList() {
       last_name: employee.last_name,
       email: employee.email,
       phone: employee.phone,
-      employee_type: employee.employee_type as any,
+      employee_type: employee.employee_type.primary_role_type.role_name as any,
       department: employee.department || "",
       salary: employee.salary?.toString() || "",
       address: employee.address || "",
@@ -178,7 +178,7 @@ export default function EmployeeList() {
                 <TableRow>
                   <TableHead>Employee ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Primary Role Type</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Joining Date</TableHead>
@@ -198,8 +198,8 @@ export default function EmployeeList() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{employee.employee_type}</Badge>
-                    </TableCell>
+                      <Badge variant="outline">{employee.employee_type.primary_role_type.role_name}</Badge>
+                    </TableCell>      
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-1 text-sm">

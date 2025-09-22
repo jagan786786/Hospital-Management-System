@@ -3,7 +3,6 @@ const { body } = require('express-validator');
 const router = express.Router();
 const employeeController = require('../controllers/employee.controller');
 
-const allowedTypes = ["Nurse", "Receptionist", "Doctor", "Admin", "Accountant", "House Help", "Floor Warden"];
 
 router.post(
   '/createEmployee',
@@ -12,7 +11,12 @@ router.post(
     body('last_name').isString().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
     body('email').isEmail().withMessage('Invalid email'),
     body('phone').isString().isLength({ min: 10 }).withMessage('Phone must be at least 10 characters'),
-    body('employee_type').isArray().withMessage("Employee type must be an array of role codes"),
+    body('employee_type.primary_role_type.role').notEmpty().withMessage("Primary role is required"),
+    body("employee_type.primary_role_type.role_name").notEmpty().withMessage("Primary role name is required"),
+     // ✅ Validate secondary roles (optional array)
+    body("employee_type.secondary_role_type").optional().isArray().withMessage("Secondary role type must be an array"),
+    body("employee_type.secondary_role_type.*.role").optional().isMongoId().withMessage("Secondary role must be a valid MongoDB ID"),
+    body("employee_type.secondary_role_type.*.role_name").optional().isString(),
     body('department').optional().isString(),
     body('salary').optional().isNumeric().withMessage('Salary must be numeric'),
     body('address').optional().isString(),
