@@ -52,9 +52,7 @@ export default function PatientList() {
     const fetchTodaysPatients = async () => {
       try {
         setIsLoading(true);
-        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-
-        console.log("Today is", today);
+        const today = new Date().toISOString().split("T")[0];
 
         //  Fetch all appointments
         const appointments: AppointmentInfo[] = await getAppointments();
@@ -62,7 +60,6 @@ export default function PatientList() {
           const visitDate = new Date(a.visit_date).toISOString().split("T")[0];
           return visitDate === today;
         });
-        console.log("today patient", todaysAppointments);
 
         if (!todaysAppointments.length) {
           setPatientRows([]);
@@ -93,12 +90,6 @@ export default function PatientList() {
         const allPatients = await getPatients(); // returns all patients
         const patients = allPatients.filter((p) => patientIds.includes(p._id));
 
-        console.log("Appointment patient IDs:", patientIds);
-        console.log(
-          "All patients IDs:",
-          allPatients.map((p) => p._id)
-        );
-
         const doctors = await Promise.all(
           doctorIds.map((id) => getEmployeeById(id))
         );
@@ -113,19 +104,13 @@ export default function PatientList() {
               ? a.patient
               : (a.patient as PatientRecord)._id;
 
-          console.log("Patientid is", patientId);
-
           const doctorId =
             typeof a.doctor === "string"
               ? a.doctor
               : (a.doctor as Employee)._id;
-          console.log("Doctorid is", doctorId);
 
           const patient = patientMap.get(patientId);
           const doctor = doctorMap.get(doctorId);
-
-          console.log("Patients are", patient);
-          console.log("Doctors are", doctor);
 
           const age = patient.date_of_birth
             ? new Date().getFullYear() -
