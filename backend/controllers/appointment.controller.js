@@ -14,13 +14,14 @@ exports.createAppointment = async (req, res) => {
     }
 
    // check if doctor exists + populate roles
-    const existingDoctor = await Employee.findById(doctor).populate("employee_type");
+    const existingDoctor = await Employee.findById(doctor);
     if (!existingDoctor) {
       return res.status(400).json({ message: "Invalid doctor selected" });
     }
 
     // check if any of the roles is "Doctor"
-    const hasDoctorRole = existingDoctor.employee_type.some(role => role.name === "Doctor");
+    const hasDoctorRole = existingDoctor.employee_type.primary_role_type?.role_name === "Doctor" || existingDoctor.employee_type.secondary_role_type?.some(
+    (r) => r.role_name === "Doctor");
     if (!hasDoctorRole) {
       return res.status(400).json({ message: "Selected employee does not have Doctor role" });
     }

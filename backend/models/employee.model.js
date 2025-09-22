@@ -6,7 +6,28 @@ const employeeSchema = new mongoose.Schema({
   last_name: { type: String, required: true, minlength: 2 },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },
-  employee_type:[ {type: mongoose.Schema.Types.ObjectId,ref: "Role",required: false,}],
+
+  // Updated employee_type field
+  employee_type: {
+    primary_role_type: {
+      role: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Role",
+        required: true
+      },
+      role_name: { type: String, required: true }
+    },
+    secondary_role_type: [
+      {
+        role: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Role"
+        },
+        role_name: { type: String }
+      }
+    ]
+  },
+
   department: { type: String, default: null },
   salary: { type: Number, default: null },
   address: { type: String, default: null },
@@ -22,7 +43,7 @@ const employeeSchema = new mongoose.Schema({
   password_hash: { type: String, required: true }
 });
 
-employeeSchema.pre('save', function(next) {
+employeeSchema.pre('save', function (next) {
   this.updated_at = new Date();
   next();
 });
