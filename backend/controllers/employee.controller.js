@@ -70,6 +70,33 @@ exports.createEmployee = async (req, res) => {
       }
     }
 
+    // 🔎 Validate primary role
+    let primaryRoleDoc = null;
+    if (employee_type?.primary_role_type?.role) {
+      primaryRoleDoc = await Role.findById(
+        employee_type.primary_role_type.role
+      ).lean();
+      if (!primaryRoleDoc) {
+        return res.status(400).json({ message: "Invalid primary role ID" });
+      }
+    } else {
+      return res.status(400).json({ message: "Primary role is required" });
+    }
+
+    // 🔎 Validate secondary roles
+    let secondaryRoles = [];
+    if (Array.isArray(employee_type?.secondary_role_type)) {
+      const roleIds = employee_type.secondary_role_type.map((r) => r.role);
+      const validSecondaryDocs = await Role.find({
+        _id: { $in: roleIds },
+      }).lean();
+
+      secondaryRoles = validSecondaryDocs.map((r) => ({
+        role: r._id,
+        role_name: r.name,
+      }));
+    }
+
     // Generate employeeId
     const employeeId = await generateEmployeeId(
       EMPLOYEE_ID_PREFIX,
@@ -84,7 +111,13 @@ exports.createEmployee = async (req, res) => {
       last_name,
       email,
       phone,
-      employee_type: validRoles.map((r) => r._id), // ✅ ensure only valid role IDs
+      employee_type: {
+        primary_role_type: {
+          role: primaryRoleDoc._id,
+          role_name: primaryRoleDoc.name,
+        },
+        secondary_role_type: secondaryRoles,
+      },
       department: department || null,
       salary: salary !== undefined && salary !== "" ? parseFloat(salary) : null,
       address: address || null,
@@ -101,7 +134,8 @@ exports.createEmployee = async (req, res) => {
       res.status(201).json({
         message: "Employee created",
         name: employee.first_name,
-        employee_id: employee._id,
+        mongo_id: employee._id,
+        employee_id: employee.employee_id,
         note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
       });
 
@@ -150,9 +184,7 @@ exports.getEmployee = async (req, res) => {
       ? { $or: [{ employee_id: employeeId }, { _id: employeeId }] }
       : { employee_id: employeeId };
 
-    const emp = await Employee.findOne(query)
-      .select("-password_hash")
-      .lean();
+    const emp = await Employee.findOne(query).select("-password_hash").lean();
 
     if (!emp) return res.status(404).json({ message: "Not found" });
 
