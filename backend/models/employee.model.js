@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const employeeSchema = new mongoose.Schema({
   employee_id: { type: String, required: true, unique: true },
@@ -13,19 +13,19 @@ const employeeSchema = new mongoose.Schema({
       role: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Role",
-        required: true
+        required: true,
       },
-      role_name: { type: String, required: true }
+      role_name: { type: String, required: true },
     },
     secondary_role_type: [
       {
         role: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Role"
+          ref: "Role",
         },
-        role_name: { type: String }
-      }
-    ]
+        role_name: { type: String },
+      },
+    ],
   },
 
   department: { type: String, default: null },
@@ -34,18 +34,18 @@ const employeeSchema = new mongoose.Schema({
   emergency_contact_name: { type: String, default: null },
   emergency_contact_phone: { type: String, default: null },
   date_of_joining: { type: Date, default: Date.now },
-  status: { type: String, default: 'active' },
+  status: { type: String, default: "active" },
   license_number: { type: String, default: null },
   specialization: { type: String, default: null },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 
-  password_hash: { type: String, required: true }
+  password_hash: { type: String, required: true },
 });
 
-employeeSchema.pre('save', function (next) {
+employeeSchema.pre("save", function (next) {
   this.updated_at = new Date();
   next();
 });
 
-module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = mongoose.model("Employee", employeeSchema);
