@@ -1,11 +1,22 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+type RoleType = {
+  role?: string;
+  role_name?: string;
+};
+
+type EmployeeType = {
+  primary_role_type: RoleType;
+  secondary_role_type: RoleType[];
+};
+
 type UserType = {
   id: string;
   name: string;
-  roles: string[]; // must match backend
+  roles: string; // must match backend
   type: string; // employee | patient
+  employee_type?: EmployeeType; // ✅ add it
 };
 
 type AuthContextType = {
@@ -34,19 +45,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    console.log(
+      "AuthProvider: Loaded user from localStorage:",
+      JSON.parse(storedUser)
+    );
     if (storedUser) setUser(JSON.parse(storedUser));
     setLoading(false);
   }, []);
 
-  const login = (
-    accessToken: string,
-    refreshToken: string,
-    userInfo: UserType
-  ) => {
+  const login = (accessToken: string, refreshToken: string, rawUser: any) => {
+    // ✅ Normalize user to UserType
+    const transformedUser: UserType = {
+      id: rawUser._id ?? rawUser.id,
+      name: rawUser.name,
+      type: rawUser.type,
+      roles: rawUser.roles?.primary_role_type?.role_name ?? "User",
+    };
+
+    // ✅ Store tokens + user
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("user", JSON.stringify(userInfo));
-    setUser(userInfo);
+    localStorage.setItem("user", JSON.stringify(transformedUser));
+
+    // ✅ Update context state
+    setUser(transformedUser);
   };
 
   const logout = () => {

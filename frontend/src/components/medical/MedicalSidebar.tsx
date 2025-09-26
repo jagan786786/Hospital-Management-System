@@ -43,7 +43,7 @@ export function MedicalSidebar() {
 
   const userInfo = {
     name: user?.name || "Guest",
-    roles: user?.roles || ["User"],
+    roles: user?.roles || "User", // ✅ string only
     avatar: "",
   };
 
@@ -181,7 +181,7 @@ export function MedicalSidebar() {
                   {userInfo.name}
                 </p>
                 <p className="text-xs text-sidebar-foreground/70 truncate">
-                  {userInfo.roles.join(", ")}
+                  {userInfo.roles}
                 </p>
 
                 <div className="flex items-center gap-1 mt-1">
