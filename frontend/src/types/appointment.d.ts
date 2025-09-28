@@ -1,3 +1,5 @@
+import { PatientRecord } from "@/types/patient";
+
 export interface AppointmentInfo {
   _id: string;
   patient: string;
@@ -22,4 +24,12 @@ export interface PatientTableRow {
   doctorName: string;
   specialization: string;
   status: "waiting" | "in-progress" | "completed";
+}
+
+export interface SimplifiedAppointment {
+  id: string; // corresponds to _id from AppointmentInfo
+  doctor_id: string; // corresponds to doctor._id
+  appointment_time: string; // corresponds to visit_time
+  visit_type: string;
+  status: "Scheduled" | "In-Progress" | "Completed" | "Cancelled";
 }

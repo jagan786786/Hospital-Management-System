@@ -1,7 +1,7 @@
 // src/types/patient.ts
 export interface PatientRecord {
   id?: string; // ✅ required
-  _id?: string; 
+  _id?: string;
   first_name: string;
   last_name: string;
   email?: string;
@@ -19,8 +19,6 @@ export interface AppointmentInfo {
   appointment_time: string;
   doctor_name: string;
 }
-
-
 
 export interface AgeRange {
   min?: number;

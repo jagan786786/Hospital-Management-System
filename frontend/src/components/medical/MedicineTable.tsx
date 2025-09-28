@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -39,35 +39,63 @@ const medicineInventory: MedicineInventory[] = [
     stockQuantity: 100,
     expiryDate: "2025-12-31",
     batchNumber: "PC001",
-    commonComplaints: ["#fever", "#headache", "#bodyache"]
+    commonComplaints: ["fever", "headache", "bodyache", "pain"],
   },
   {
-    id: "2", 
+    id: "2",
     name: "Ibuprofen",
     genericName: "Ibuprofen",
-    strength: "400mg", 
+    strength: "400mg",
     form: "Tablet",
     manufacturer: "MediLab",
     stockQuantity: 75,
     expiryDate: "2025-10-15",
     batchNumber: "ML002",
-    commonComplaints: ["#pain", "#inflammation", "#fever"]
+    commonComplaints: ["pain", "inflammation", "fever", "headache"],
   },
   {
     id: "3",
     name: "Amoxicillin",
     genericName: "Amoxicillin",
     strength: "250mg",
-    form: "Capsule", 
+    form: "Capsule",
     manufacturer: "BioMed",
     stockQuantity: 50,
     expiryDate: "2025-08-20",
     batchNumber: "BM003",
-    commonComplaints: ["#infection", "#cough", "#cold"]
-  }
+    commonComplaints: ["infection", "cough", "cold", "throat pain"],
+  },
+  {
+    id: "4",
+    name: "Cetirizine",
+    genericName: "Cetirizine HCl",
+    strength: "10mg",
+    form: "Tablet",
+    manufacturer: "AllerMed",
+    stockQuantity: 60,
+    expiryDate: "2025-09-30",
+    batchNumber: "AM004",
+    commonComplaints: ["allergy", "itching", "runny nose", "sneezing"],
+  },
+  {
+    id: "5",
+    name: "Omeprazole",
+    genericName: "Omeprazole",
+    strength: "20mg",
+    form: "Capsule",
+    manufacturer: "GastroMed",
+    stockQuantity: 40,
+    expiryDate: "2025-11-15",
+    batchNumber: "GM005",
+    commonComplaints: ["acidity", "heartburn", "stomach pain", "indigestion"],
+  },
 ];
 
-export function MedicineTable({ medicines, onChange, complaints }: MedicineTableProps) {
+export function MedicineTable({
+  medicines,
+  onChange,
+  complaints,
+}: MedicineTableProps) {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newMedicine, setNewMedicine] = useState<Partial<Medicine>>({});
@@ -75,27 +103,37 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
 
   // Get suggested medicines based on complaints
   const getSuggestedMedicines = () => {
-    return medicineInventory.filter(med => 
-      med.commonComplaints.some(complaint => 
-        complaints.includes(complaint)
+    if (complaints.length === 0) return [];
+
+    return medicineInventory.filter((med) =>
+      med.commonComplaints.some((complaint) =>
+        complaints.some(
+          (userComplaint) =>
+            complaint.toLowerCase().includes(userComplaint.toLowerCase()) ||
+            userComplaint.toLowerCase().includes(complaint.toLowerCase())
+        )
       )
     );
   };
 
   const handleAddMedicine = () => {
-    if (newMedicine.name && newMedicine.dosage && newMedicine.timeFreqDuration) {
+    if (
+      newMedicine.name &&
+      newMedicine.dosage &&
+      newMedicine.timeFreqDuration
+    ) {
       const medicine: Medicine = {
         id: Date.now().toString(),
         name: newMedicine.name,
         dosage: newMedicine.dosage,
         timeFreqDuration: newMedicine.timeFreqDuration,
         notes: newMedicine.notes || "",
-        availableInInventory: medicineInventory.some(inv => 
-          inv.name.toLowerCase() === newMedicine.name?.toLowerCase()
+        availableInInventory: medicineInventory.some(
+          (inv) => inv.name.toLowerCase() === newMedicine.name?.toLowerCase()
         ),
-        relatedComplaints: complaints
+        relatedComplaints: complaints,
       };
-      
+
       onChange([...medicines, medicine]);
       setNewMedicine({});
       setIsAddingNew(false);
@@ -103,7 +141,7 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
   };
 
   const handleEditMedicine = (id: string, updates: Partial<Medicine>) => {
-    const updatedMedicines = medicines.map(med =>
+    const updatedMedicines = medicines.map((med) =>
       med.id === id ? { ...med, ...updates } : med
     );
     onChange(updatedMedicines);
@@ -111,7 +149,7 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
   };
 
   const handleDeleteMedicine = (id: string) => {
-    const updatedMedicines = medicines.filter(med => med.id !== id);
+    const updatedMedicines = medicines.filter((med) => med.id !== id);
     onChange(updatedMedicines);
   };
 
@@ -120,10 +158,11 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
       setSuggestions([]);
       return;
     }
-    
-    const filtered = medicineInventory.filter(med =>
-      med.name.toLowerCase().includes(query.toLowerCase()) ||
-      med.genericName?.toLowerCase().includes(query.toLowerCase())
+
+    const filtered = medicineInventory.filter(
+      (med) =>
+        med.name.toLowerCase().includes(query.toLowerCase()) ||
+        med.genericName?.toLowerCase().includes(query.toLowerCase())
     );
     setSuggestions(filtered);
   };
@@ -132,19 +171,19 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
   const addSuggestedMedicines = () => {
     const suggested = getSuggestedMedicines();
     const newMedicines = suggested
-      .filter(inv => !medicines.some(med => med.name === inv.name))
-      .map(inv => ({
+      .filter((inv) => !medicines.some((med) => med.name === inv.name))
+      .map((inv) => ({
         id: Date.now().toString() + Math.random(),
         name: inv.name,
         dosage: inv.strength,
         timeFreqDuration: "1-1-1 for 5 days",
         notes: `Generic: ${inv.genericName}`,
         availableInInventory: true,
-        relatedComplaints: complaints.filter(complaint => 
+        relatedComplaints: complaints.filter((complaint) =>
           inv.commonComplaints.includes(complaint)
-        )
+        ),
       }));
-    
+
     if (newMedicines.length > 0) {
       onChange([...medicines, ...newMedicines]);
     }
@@ -156,9 +195,9 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
         <div className="flex items-center gap-4">
           <h3 className="text-lg font-semibold">Medicines Prescribed</h3>
           {complaints.length > 0 && getSuggestedMedicines().length > 0 && (
-            <Button 
+            <Button
               onClick={addSuggestedMedicines}
-              variant="outline" 
+              variant="outline"
               size="sm"
               className="text-xs"
             >
@@ -166,7 +205,11 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
             </Button>
           )}
         </div>
-        <Button onClick={() => setIsAddingNew(true)} variant="medical" size="sm">
+        <Button
+          onClick={() => setIsAddingNew(true)}
+          variant="medical"
+          size="sm"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Medicine
         </Button>
@@ -193,7 +236,9 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                       <Input
                         value={medicine.name}
                         onChange={(e) => {
-                          handleEditMedicine(medicine.id, { name: e.target.value });
+                          handleEditMedicine(medicine.id, {
+                            name: e.target.value,
+                          });
                           searchMedicine(e.target.value);
                         }}
                         className="w-full"
@@ -205,12 +250,18 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                               key={suggestion.id}
                               className="p-2 hover:bg-muted cursor-pointer text-sm"
                               onClick={() => {
-                                handleEditMedicine(medicine.id, { name: suggestion.name });
+                                handleEditMedicine(medicine.id, {
+                                  name: suggestion.name,
+                                });
                                 setSuggestions([]);
                               }}
                             >
-                              <div className="font-medium">{suggestion.name}</div>
-                              <div className="text-muted-foreground">{suggestion.genericName} - {suggestion.strength}</div>
+                              <div className="font-medium">
+                                {suggestion.name}
+                              </div>
+                              <div className="text-muted-foreground">
+                                {suggestion.genericName} - {suggestion.strength}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -224,7 +275,11 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                   {editingId === medicine.id ? (
                     <Input
                       value={medicine.dosage}
-                      onChange={(e) => handleEditMedicine(medicine.id, { dosage: e.target.value })}
+                      onChange={(e) =>
+                        handleEditMedicine(medicine.id, {
+                          dosage: e.target.value,
+                        })
+                      }
                     />
                   ) : (
                     medicine.dosage
@@ -234,7 +289,11 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                   {editingId === medicine.id ? (
                     <Input
                       value={medicine.timeFreqDuration}
-                      onChange={(e) => handleEditMedicine(medicine.id, { timeFreqDuration: e.target.value })}
+                      onChange={(e) =>
+                        handleEditMedicine(medicine.id, {
+                          timeFreqDuration: e.target.value,
+                        })
+                      }
                     />
                   ) : (
                     medicine.timeFreqDuration
@@ -244,28 +303,45 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                   {editingId === medicine.id ? (
                     <Textarea
                       value={medicine.notes || ""}
-                      onChange={(e) => handleEditMedicine(medicine.id, { notes: e.target.value })}
+                      onChange={(e) =>
+                        handleEditMedicine(medicine.id, {
+                          notes: e.target.value,
+                        })
+                      }
                       className="min-h-[60px]"
                     />
                   ) : (
-                    <div className="text-sm text-muted-foreground">{medicine.notes}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {medicine.notes}
+                    </div>
                   )}
                 </TableCell>
-                 <TableCell>
-                   <div className="flex flex-col gap-1">
-                     <Badge 
-                       variant={medicine.availableInInventory ? "default" : "secondary"}
-                       className={medicine.availableInInventory ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"}
-                     >
-                       {medicine.availableInInventory ? "Available" : "Not in Stock"}
-                     </Badge>
-                     {medicine.notes?.includes("Auto-suggested") && (
-                       <Badge variant="outline" className="text-xs border-primary text-primary">
-                         AI Suggested
-                       </Badge>
-                     )}
-                   </div>
-                 </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <Badge
+                      variant={
+                        medicine.availableInInventory ? "default" : "secondary"
+                      }
+                      className={
+                        medicine.availableInInventory
+                          ? "bg-success text-success-foreground"
+                          : "bg-warning text-warning-foreground"
+                      }
+                    >
+                      {medicine.availableInInventory
+                        ? "Available"
+                        : "Not in Stock"}
+                    </Badge>
+                    {medicine.notes?.includes("Auto-suggested") && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs border-primary text-primary"
+                      >
+                        AI Suggested
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     {editingId === medicine.id ? (
@@ -311,7 +387,7 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                 </TableCell>
               </TableRow>
             ))}
-            
+
             {isAddingNew && (
               <TableRow>
                 <TableCell>
@@ -320,7 +396,10 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                       placeholder="Medicine name"
                       value={newMedicine.name || ""}
                       onChange={(e) => {
-                        setNewMedicine({ ...newMedicine, name: e.target.value });
+                        setNewMedicine({
+                          ...newMedicine,
+                          name: e.target.value,
+                        });
                         searchMedicine(e.target.value);
                       }}
                     />
@@ -331,12 +410,17 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                             key={suggestion.id}
                             className="p-2 hover:bg-muted cursor-pointer text-sm"
                             onClick={() => {
-                              setNewMedicine({ ...newMedicine, name: suggestion.name });
+                              setNewMedicine({
+                                ...newMedicine,
+                                name: suggestion.name,
+                              });
                               setSuggestions([]);
                             }}
                           >
                             <div className="font-medium">{suggestion.name}</div>
-                            <div className="text-muted-foreground">{suggestion.genericName} - {suggestion.strength}</div>
+                            <div className="text-muted-foreground">
+                              {suggestion.genericName} - {suggestion.strength}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -347,21 +431,30 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
                   <Input
                     placeholder="Dosage"
                     value={newMedicine.dosage || ""}
-                    onChange={(e) => setNewMedicine({ ...newMedicine, dosage: e.target.value })}
+                    onChange={(e) =>
+                      setNewMedicine({ ...newMedicine, dosage: e.target.value })
+                    }
                   />
                 </TableCell>
                 <TableCell>
                   <Input
                     placeholder="e.g., 1-1-1 for 5 days"
                     value={newMedicine.timeFreqDuration || ""}
-                    onChange={(e) => setNewMedicine({ ...newMedicine, timeFreqDuration: e.target.value })}
+                    onChange={(e) =>
+                      setNewMedicine({
+                        ...newMedicine,
+                        timeFreqDuration: e.target.value,
+                      })
+                    }
                   />
                 </TableCell>
                 <TableCell>
                   <Textarea
                     placeholder="Notes"
                     value={newMedicine.notes || ""}
-                    onChange={(e) => setNewMedicine({ ...newMedicine, notes: e.target.value })}
+                    onChange={(e) =>
+                      setNewMedicine({ ...newMedicine, notes: e.target.value })
+                    }
                     className="min-h-[60px]"
                   />
                 </TableCell>
@@ -398,11 +491,13 @@ export function MedicineTable({ medicines, onChange, complaints }: MedicineTable
           </TableBody>
         </Table>
       </div>
-      
+
       {medicines.length === 0 && !isAddingNew && (
         <div className="text-center py-8 text-muted-foreground">
           <p>No medicines prescribed yet.</p>
-          <p className="text-sm">Add medicines based on patient complaints above.</p>
+          <p className="text-sm">
+            Add medicines based on patient complaints above.
+          </p>
         </div>
       )}
     </div>
