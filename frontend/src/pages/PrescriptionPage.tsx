@@ -24,8 +24,21 @@ import {
   Medicine,
   HistoricalVisit,
 } from "@/types/medical";
+import { PatientRecord } from "@/types/patient";
+import { SimplifiedAppointment } from "@/types/appointment";
+import { Prescription } from "@/types/prescription";
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getPatientsById } from "@/api/services/patientService";
+import {
+  getAppointmentsByParams,
+  updateAppointment,
+} from "@/api/services/appointmentService";
+import {
+  getPrescriptionsByPatientId,
+  upsertPrescription,
+} from "@/api/services/prescriptionService";
 
 // Historical visits will be loaded from the database (prescriptions table)
 
@@ -42,7 +55,9 @@ export default function PrescriptionPage() {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [visitData, setVisitData] = useState<Partial<PatientVisit>>({
+  const [visitData, setVisitData] = useState<
+    Partial<PatientVisit> & { prescriptionId?: string }
+  >({
     complaints: [],
     medicines: [],
     advice: "",
@@ -64,6 +79,148 @@ export default function PrescriptionPage() {
     status: string;
   } | null>(null);
 
+  // useEffect(() => {
+  //   const fetchPatientData = async () => {
+  //     if (!actualPatientId) {
+  //       console.error("No patient ID provided");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       console.log("Fetching patient data for ID:", actualPatientId);
+  //       console.log("Appointment ID from query:", appointmentIdFromQuery);
+  //       const today = new Date().toISOString().split("T")[0];
+
+  //       // 1) Patient basic info
+  //       const { data: patientData, error: patientError } = await supabase
+  //         .from("patients")
+  //         .select("*")
+  //         .eq("id", actualPatientId)
+  //         .single();
+  //       if (patientError) throw patientError;
+  //       if (!patientData) {
+  //         setIsLoading(false);
+  //         return;
+  //       }
+
+  //       const age = patientData.date_of_birth
+  //         ? new Date().getFullYear() -
+  //           new Date(patientData.date_of_birth).getFullYear()
+  //         : 0;
+
+  // // 2) Today's appointment (id+doctor) - prioritize query param appointment ID
+  // let appointmentQuery = supabase
+  //   .from("appointments")
+  //   .select("id, doctor_id, appointment_time, visit_type, status")
+  //   .eq("patient_id", actualPatientId);
+
+  // // If we have a specific appointment ID from query, use it
+  // if (appointmentIdFromQuery) {
+  //   appointmentQuery = appointmentQuery.eq("id", appointmentIdFromQuery);
+  // } else {
+  //   // Otherwise get today's appointment
+  //   appointmentQuery = appointmentQuery.eq("appointment_date", today);
+  // }
+
+  // const { data: appointmentData } = await appointmentQuery.maybeSingle();
+
+  // let appointmentTime = "Not scheduled";
+  // let visitType = "consultation";
+  // let status = "waiting";
+  // let apptId: string | null = null;
+  // let doctorId: string | null = null;
+
+  // if (appointmentData) {
+  //   apptId = appointmentData.id;
+  //   doctorId = appointmentData.doctor_id;
+  //   appointmentTime = new Date(
+  //     `2000-01-01T${appointmentData.appointment_time}`
+  //   ).toLocaleTimeString("en-US", {
+  //     hour: "numeric",
+  //     minute: "2-digit",
+  //     hour12: true,
+  //   });
+  //   visitType = appointmentData.visit_type || "consultation";
+  //   status = appointmentData.status || "waiting";
+  //   setAppointmentInfo({ id: apptId, doctor_id: doctorId!, status });
+  // } else {
+  //   setAppointmentInfo(null);
+  // }
+
+  // const patient: Patient = {
+  //   id: patientData.id,
+  //   name: `${patientData.first_name} ${patientData.last_name}`,
+  //   age,
+  //   phone: patientData.phone || "",
+  //   appointmentTime,
+  //   status: status as "waiting" | "in-progress" | "completed",
+  //   visitType: visitType as "follow-up" | "new-patient" | "consultation",
+  //   dateOfBirth: patientData.date_of_birth || "",
+  //   address: patientData.address || "",
+  //   emergencyContact: "",
+  // };
+  // setPatient(patient);
+
+  //       // 3) Load prescriptions history
+  //       const { data: prescriptions, error: prescError } = await supabase
+  //         .from("prescriptions")
+  //         .select("*")
+  //         .eq("patient_id", actualPatientId)
+  //         .order("visit_date", { ascending: false });
+  //       if (prescError) throw prescError;
+
+  //       const history: HistoricalVisit[] = (prescriptions || []).map(
+  //         (p: any) => ({
+  //           id: p.id,
+  //           date: p.visit_date,
+  //           complaints: Array.isArray(p.complaints) ? p.complaints : [],
+  //           medicines: Array.isArray(p.medicines)
+  //             ? (p.medicines as unknown as Medicine[])
+  //             : [],
+  //           advice: p.advice || "",
+  //           testsPresc: p.tests_prescribed || "",
+  //           doctorNotes: p.doctor_notes || "",
+  //         })
+  //       );
+  //       setHistoricalVisits(history);
+
+  //       // 4) If today's prescription exists, prefill editable form
+  //       if (apptId) {
+  //         const todayPresc = (prescriptions || []).find(
+  //           (p: any) => p.appointment_id === apptId
+  //         );
+  //         if (todayPresc) {
+  //           setVisitData({
+  //             complaints: Array.isArray(todayPresc.complaints)
+  //               ? todayPresc.complaints
+  //               : [],
+  //             medicines: Array.isArray(todayPresc.medicines)
+  //               ? (todayPresc.medicines as unknown as Medicine[])
+  //               : [],
+  //             advice: todayPresc.advice || "",
+  //             testsPresc: todayPresc.tests_prescribed || "",
+  //             nextVisit: todayPresc.next_visit || "",
+  //             bloodPressure: todayPresc.blood_pressure || "",
+  //             pulse: todayPresc.pulse || "",
+  //             height: todayPresc.height || "",
+  //             weight: todayPresc.weight || "",
+  //             bmi: todayPresc.bmi || "",
+  //             spo2: todayPresc.spo2 || "",
+  //           });
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error in fetchPatientData:", error);
+  //       toast.error("Failed to fetch patient data");
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   fetchPatientData();
+  // }, [actualPatientId, appointmentIdFromQuery]);
+
   useEffect(() => {
     const fetchPatientData = async () => {
       if (!actualPatientId) {
@@ -78,37 +235,57 @@ export default function PrescriptionPage() {
         const today = new Date().toISOString().split("T")[0];
 
         // 1) Patient basic info
-        const { data: patientData, error: patientError } = await supabase
-          .from("patients")
-          .select("*")
-          .eq("id", actualPatientId)
-          .single();
-        if (patientError) throw patientError;
+        // --------------------------------------------------------------------------------
+        // Fetch patient data using the new service
+        const patientData: PatientRecord = await getPatientsById(
+          actualPatientId
+        );
+
+        // We simulate the Supabase error handling: if service returns no data (e.g., throws 404 or returns null/undefined)
         if (!patientData) {
+          // No direct patientError variable needed as the API client handles the error state via try/catch
           setIsLoading(false);
           return;
         }
 
-        const age = patientData.date_of_birth
-          ? new Date().getFullYear() -
-            new Date(patientData.date_of_birth).getFullYear()
-          : 0;
+        // Use an empty object for data destructuring to keep existing structure
+        const patientError = null; // No need for error object with try/catch
 
-        // 2) Today's appointment (id+doctor) - prioritize query param appointment ID
-        let appointmentQuery = supabase
-          .from("appointments")
-          .select("id, doctor_id, appointment_time, visit_type, status")
-          .eq("patient_id", actualPatientId);
+        // This destructuring is for structural equivalence to the original code
+        const data: PatientRecord = patientData;
 
-        // If we have a specific appointment ID from query, use it
-        if (appointmentIdFromQuery) {
-          appointmentQuery = appointmentQuery.eq("id", appointmentIdFromQuery);
-        } else {
-          // Otherwise get today's appointment
-          appointmentQuery = appointmentQuery.eq("appointment_date", today);
+        if (patientError) throw patientError; // This line is primarily for structure
+        if (!data) {
+          // Use data instead of patientData to maintain variable names for subsequent logic
+          setIsLoading(false);
+          return;
         }
 
-        const { data: appointmentData } = await appointmentQuery.maybeSingle();
+        const age = data.date_of_birth
+          ? new Date().getFullYear() -
+            new Date(data.date_of_birth).getFullYear()
+          : 0;
+        // --------------------------------------------------------------------------------
+
+        // 2) Today's appointment (id+doctor) - prioritize query param appointment ID
+        // --------------------------------------------------------------------------------
+        // Determine the query parameters: appointmentIdFromQuery OR today's date
+        const appointmentList: SimplifiedAppointment[] =
+          await getAppointmentsByParams(
+            actualPatientId,
+            appointmentIdFromQuery,
+            appointmentIdFromQuery ? undefined : today
+          );
+
+        // Simulate Supabase maybeSingle(): take the first item or null
+        const appointmentData =
+          appointmentList.length > 0 ? appointmentList[0] : null;
+
+        // The original code used a destructured variable name 'data', changing this locally to 'appointmentData'
+        // to match the original block's effect:
+        // const { data: appointmentData } = await appointmentQuery.maybeSingle();
+        // Since the service returns the data directly, we use appointmentData.
+        // --------------------------------------------------------------------------------
 
         let appointmentTime = "Not scheduled";
         let visitType = "consultation";
@@ -132,28 +309,32 @@ export default function PrescriptionPage() {
         } else {
           setAppointmentInfo(null);
         }
-
+        console.log("Total Appointment Details", appointmentInfo);
         const patient: Patient = {
-          id: patientData.id,
-          name: `${patientData.first_name} ${patientData.last_name}`,
+          id: data._id, // Using 'data' for patient object construction
+          name: `${data.first_name} ${data.last_name}`,
           age,
-          phone: patientData.phone || "",
+          phone: data.phone || "",
           appointmentTime,
           status: status as "waiting" | "in-progress" | "completed",
           visitType: visitType as "follow-up" | "new-patient" | "consultation",
-          dateOfBirth: patientData.date_of_birth || "",
-          address: patientData.address || "",
+          dateOfBirth: data.date_of_birth || "",
+          address: data.address || "",
           emergencyContact: "",
         };
         setPatient(patient);
 
         // 3) Load prescriptions history
-        const { data: prescriptions, error: prescError } = await supabase
-          .from("prescriptions")
-          .select("*")
-          .eq("patient_id", actualPatientId)
-          .order("visit_date", { ascending: false });
-        if (prescError) throw prescError;
+        // --------------------------------------------------------------------------------
+        // Fetch prescriptions history using the new service
+        const prescriptions: Prescription[] = await getPrescriptionsByPatientId(
+          actualPatientId
+        );
+        // We simulate the Supabase structure by setting error to null
+        const prescError = null;
+
+        if (prescError) throw prescError; // This line is primarily for structure
+        // --------------------------------------------------------------------------------
 
         const history: HistoricalVisit[] = (prescriptions || []).map(
           (p: any) => ({
@@ -171,12 +352,14 @@ export default function PrescriptionPage() {
         setHistoricalVisits(history);
 
         // 4) If today's prescription exists, prefill editable form
+        // ... (rest of the prefill logic remains the same)
         if (apptId) {
           const todayPresc = (prescriptions || []).find(
             (p: any) => p.appointment_id === apptId
           );
           if (todayPresc) {
-            setVisitData({
+            setVisitData((prev) => ({
+              ...prev,
               complaints: Array.isArray(todayPresc.complaints)
                 ? todayPresc.complaints
                 : [],
@@ -192,7 +375,15 @@ export default function PrescriptionPage() {
               weight: todayPresc.weight || "",
               bmi: todayPresc.bmi || "",
               spo2: todayPresc.spo2 || "",
-            });
+              // ✅ Add this line to track existing prescription
+              prescriptionId: todayPresc._id || todayPresc.id,
+            }));
+          } else {
+            // No prescription for today → clear prescriptionId to ensure upsert creates new
+            setVisitData((prev) => ({
+              ...prev,
+              prescriptionId: undefined,
+            }));
           }
         }
       } catch (error) {
@@ -207,6 +398,7 @@ export default function PrescriptionPage() {
   }, [actualPatientId, appointmentIdFromQuery]);
 
   const handleVitalsChange = (field: string, value: string) => {
+    console.log("Vitals change triggered →", { field, value, prev: visitData });
     setVisitData((prev) => ({ ...prev, [field]: value }));
 
     // Auto-calculate BMI if height and weight are provided
@@ -228,13 +420,13 @@ export default function PrescriptionPage() {
     }
   };
 
+  // Medicine suggestions
   const handleComplaintsChange = async (complaints: string[]) => {
     console.log(
       "handleComplaintsChange triggered with complaints:",
       complaints
     );
     console.log("Current appointment info:", appointmentInfo);
-
     setVisitData((prev) => ({ ...prev, complaints }));
 
     // Auto-suggest medicines based on doctor's patterns when complaints are added
@@ -323,6 +515,7 @@ export default function PrescriptionPage() {
       const today = new Date().toISOString().split("T")[0];
 
       const prescriptionData = {
+        _id: visitData.prescriptionId,
         appointment_id: appointmentInfo.id,
         patient_id: actualPatientId,
         doctor_id: appointmentInfo.doctor_id,
@@ -341,16 +534,26 @@ export default function PrescriptionPage() {
       };
 
       // Upsert prescription data
-      const { error } = await supabase
-        .from("prescriptions")
-        .upsert(prescriptionData, {
-          onConflict: "appointment_id",
-          ignoreDuplicates: false,
-        });
+      // const { error } = await supabase
+      //   .from("prescriptions")
+      //   .upsert(prescriptionData, {
+      //     onConflict: "appointment_id",
+      //     ignoreDuplicates: false,
+      //   });
 
-      if (error) throw error;
+      // if (error) throw error;
 
-      toast.success("Prescription saved successfully!");
+      try {
+        const prescriptionResult = await upsertPrescription(prescriptionData);
+        setVisitData((prev) => ({
+          ...prev,
+          prescriptionId: prescriptionResult._id, // store the returned _id
+        }));
+        toast.success("Prescription saved successfully!");
+      } catch (error) {
+        console.error("Error upserting prescription:", error);
+        toast.error("Failed to save prescription");
+      }
 
       // Refresh the page data to show updated history
       window.location.reload();
@@ -375,8 +578,9 @@ export default function PrescriptionPage() {
 
     try {
       const today = new Date().toISOString().split("T")[0];
-
+      console.log("Lets see prescription", visitData);
       const prescriptionData = {
+        _id: visitData.prescriptionId,
         appointment_id: appointmentInfo.id,
         patient_id: actualPatientId,
         doctor_id: appointmentInfo.doctor_id,
@@ -395,24 +599,42 @@ export default function PrescriptionPage() {
       };
 
       // 1. Save prescription data
-      const { error: prescError } = await supabase
-        .from("prescriptions")
-        .upsert(prescriptionData, {
-          onConflict: "appointment_id",
-          ignoreDuplicates: false,
-        });
+      // const { error: prescError } = await supabase
+      //   .from("prescriptions")
+      //   .upsert(prescriptionData, {
+      //     onConflict: "appointment_id",
+      //     ignoreDuplicates: false,
+      //   });
 
-      if (prescError) throw prescError;
+      // if (prescError) throw prescError;
 
+      try {
+        const prescriptionResult = await upsertPrescription(prescriptionData);
+        setVisitData((prev) => ({
+          ...prev,
+          prescriptionId: prescriptionResult._id, // store the returned _id
+        }));
+      } catch (error) {
+        console.error("Error upserting prescription:", error);
+        toast.error("Failed to save prescription");
+      }
       // 2. Mark appointment as completed
-      const { error: apptError } = await supabase
-        .from("appointments")
-        .update({ status: "completed" })
-        .eq("id", appointmentInfo.id);
+      // const { error: apptError } = await supabase
+      //   .from("appointments")
+      //   .update({ status: "completed" })
+      //   .eq("id", appointmentInfo.id);
 
-      if (apptError) throw apptError;
+      // if (apptError) throw apptError;
 
-      toast.success("Appointment completed and prescription saved!");
+      // toast.success("Appointment completed and prescription saved!");
+
+      try {
+        await updateAppointment(appointmentInfo.id, { status: "Completed" });
+      } catch (error) {
+        console.error("Error updating appointment status:", error);
+        toast.error("Failed to mark appointment as completed");
+        return;
+      }
 
       // Navigate back to patient list after completion
       setTimeout(() => {
@@ -533,7 +755,24 @@ export default function PrescriptionPage() {
             <div className="text-center">
               <h1 className="text-2xl font-bold">Medical Prescription</h1>
               <p className="text-primary-foreground/80 mt-1">
-                Dr. Sarah Mitchell - Internal Medicine
+                {/* Dr. Sarah Mitchell - Internal Medicine */}
+                {(() => {
+                  const doctor = localStorage.getItem("user");
+                  console.log("From LOcal storage", doctor);
+                  if (doctor) {
+                    try {
+                      const parsed = JSON.parse(doctor);
+                      return `Dr. ${parsed.name}`;
+                    } catch (err) {
+                      console.error(
+                        "Failed to parse doctor details from localStorage",
+                        err
+                      );
+                      return "Dr. Unknown";
+                    }
+                  }
+                  return "Dr. Unknown";
+                })()}
               </p>
             </div>
           </CardHeader>
@@ -560,7 +799,7 @@ export default function PrescriptionPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Patient ID:</span>
                     <span className="font-medium">
-                      #{patient.id.padStart(6, "0")}
+                      {patient.id ? `#${patient.id.padStart(6, "0")}` : ""}
                     </span>
                   </div>
                 </div>

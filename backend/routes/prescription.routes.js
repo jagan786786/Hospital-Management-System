@@ -1,10 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const prescriptionController = require('../controllers/prescription.controller');
+const prescriptionController = require("../controllers/prescription.controller");
 
 // Create a new prescription
 router.post(
-  '/createPrescription',
+  "/createPrescription",
   /* 
     #swagger.tags = ['Prescriptions']
     #swagger.summary = 'Create a new prescription'
@@ -46,7 +46,7 @@ router.post(
 
 // Get all prescriptions
 router.get(
-  '/getPrescriptions',
+  "/getPrescriptions",
   /* 
     #swagger.tags = ['Prescriptions']
     #swagger.summary = 'Fetch all prescriptions'
@@ -67,7 +67,7 @@ router.get(
 
 // Get prescription by ID
 router.get(
-  '/getPrescriptionById/:id',
+  "/getPrescriptionById/:id",
   /* 
     #swagger.tags = ['Prescriptions']
     #swagger.summary = 'Get prescription by ID'
@@ -92,7 +92,7 @@ router.get(
 
 // Update prescription
 router.put(
-  '/updatePrescription/:id',
+  "/updatePrescription/:id",
   /* 
     #swagger.tags = ['Prescriptions']
     #swagger.summary = 'Update a prescription'
@@ -119,7 +119,7 @@ router.put(
 
 // Delete prescription
 router.delete(
-  '/deletePrescription/:id',
+  "/deletePrescription/:id",
   /* 
     #swagger.tags = ['Prescriptions']
     #swagger.summary = 'Delete prescription'
@@ -133,6 +133,133 @@ router.delete(
     #swagger.responses[404] = { description: "Prescription not found" }
   */
   prescriptionController.deletePrescription
+);
+
+// Get prescription by ID
+router.get(
+  "/getPrescriptionsByPatientId/:id",
+  /* 
+    #swagger.tags = ['Prescriptions']
+    #swagger.summary = 'Get prescription by ID'
+    #swagger.parameters['id'] = {
+      in: 'path',
+      description: 'Prescription ID',
+      required: true,
+      type: 'string'
+    }
+    #swagger.responses[200] = {
+      description: "Prescription details",
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/Prescription" }
+        }
+      }
+    }
+    #swagger.responses[404] = { description: "Prescription not found" }
+  */
+  prescriptionController.getPrescriptionById
+);
+
+// Get prescriptions by patient
+router.get(
+  "/getPrescriptionsByPatient",
+  /*
+    #swagger.tags = ['Prescriptions']
+    #swagger.summary = 'Get prescriptions by patient ID (optional appointment filter)'
+    #swagger.parameters['patientId'] = {
+      in: 'query',
+      description: 'ID of the patient',
+      required: true,
+      type: 'string'
+    }
+    #swagger.parameters['appointmentId'] = {
+      in: 'query',
+      description: 'Optional appointment ID to filter prescriptions',
+      required: false,
+      type: 'string'
+    }
+    #swagger.responses[200] = { 
+      description: "List of prescriptions for the patient",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: { $ref: "#/components/schemas/Prescription" }
+          },
+          example: [
+            {
+              "_id": "68d93a037789f2d6170c3fbc",
+              "appointment_id": "68d92f06a1a56a1a3f706798",
+              "patient_id": {
+                "_id": "68c9240bd092bc65a28ec1ef",
+                "first_name": "John",
+                "last_name": "Doe",
+                "phone": "9876543210"
+              },
+              "doctor_id": {
+                "employee_type": {
+                  "primary_role_type": {
+                    "role": "68c6fc96408320281fa3fdcd",
+                    "role_name": "Doctor"
+                  },
+                  "secondary_role_type": []
+                },
+                "_id": "68d0d29d2cd8e6adc84809b6",
+                "first_name": "Neha",
+                "last_name": "Reddy",
+                "department": "General Surgery"
+              },
+              "visit_date": "2025-09-28T00:00:00.000Z",
+              "blood_pressure": "120/80",
+              "pulse": "72",
+              "height": "190",
+              "weight": "95",
+              "bmi": "26.3",
+              "spo2": "100",
+              "complaints": ["fever","vomiting"],
+              "medicines": [{"name":"Paracetamol","dosage":"500mg","_id":"68d93a037789f2d6170c3fbd"}],
+              "advice": "Sleep properly",
+              "tests_prescribed": "Full Body checkup",
+              "next_visit": "2 days",
+              "status": "Draft",
+              "createdAt": "2025-09-28T13:37:07.653Z",
+              "updatedAt": "2025-09-28T13:37:07.653Z",
+              "__v": 0
+            }
+          ]
+        }
+      }
+    }
+    #swagger.responses[500] = { description: "Error fetching prescriptions" }
+  */
+  prescriptionController.getPrescriptionsByPatientId
+);
+// Upsert prescription (create or update) prescription
+router.post(
+  "/upsertPrescription",
+  /* 
+    #swagger.tags = ['Prescriptions']
+    #swagger.summary = 'Create or update a prescription (upsert)'
+    #swagger.requestBody = {
+      required: true,
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/Prescription" }
+        }
+      }
+    }
+    #swagger.responses[200] = {
+      description: "Prescription created or updated successfully",
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/Prescription" }
+        }
+      }
+    }
+    #swagger.responses[400] = { description: "Invalid request payload" }
+    #swagger.responses[500] = { description: "Server error while upserting prescription" }
+  */
+  prescriptionController.upsertPrescription
 );
 
 module.exports = router;

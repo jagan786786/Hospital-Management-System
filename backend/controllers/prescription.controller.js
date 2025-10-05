@@ -1,8 +1,7 @@
-const Prescription = require('../models/prescription.model');
-const Patient = require('../models/patient.model');
-const Employee = require('../models/employee.model');
+const Prescription = require("../models/prescription.model");
+const Patient = require("../models/patient.model");
+const Employee = require("../models/employee.model");
 const Appointment = require("../models/appointment.model");
-
 
 // ✅ Create Prescription
 exports.createPrescription = async (req, res) => {
@@ -19,7 +18,10 @@ exports.createPrescription = async (req, res) => {
 
     // validate doctor
     const existingDoctor = await Employee.findById(doctor_id);
-    if (!existingDoctor || existingDoctor.employee_type.primary_role_type.role_name !== "Doctor") {
+    if (
+      !existingDoctor ||
+      existingDoctor.employee_type.primary_role_type.role_name !== "Doctor"
+    ) {
       return res.status(400).json({ message: "Invalid doctor" });
     }
 
@@ -34,7 +36,7 @@ exports.createPrescription = async (req, res) => {
       patient_id,
       doctor_id,
       appointment_id,
-      ...otherFields
+      ...otherFields,
     });
 
     await prescription.save();
@@ -46,8 +48,6 @@ exports.createPrescription = async (req, res) => {
   }
 };
 
-
-
 // ✅ Get all prescriptions
 exports.getPrescriptions = async (req, res) => {
   try {
@@ -56,7 +56,9 @@ exports.getPrescriptions = async (req, res) => {
       .populate("doctor_id", "first_name last_name department employee_type");
     res.status(200).json(prescriptions);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching prescriptions", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching prescriptions", error: error.message });
   }
 };
 
@@ -68,14 +70,16 @@ exports.getPrescriptionById = async (req, res) => {
       .populate("patient_id", "first_name last_name phone")
       .populate("doctor_id", "first_name last_name department employee_type");
 
-    if (!prescription) return res.status(404).json({ message: "Prescription not found" });
+    if (!prescription)
+      return res.status(404).json({ message: "Prescription not found" });
 
     res.status(200).json(prescription);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching prescription", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching prescription", error: error.message });
   }
 };
-
 
 // ✅ Update prescription
 
@@ -105,17 +109,68 @@ exports.updatePrescription = async (req, res) => {
   }
 };
 
-
 // ✅ Delete prescription
 exports.deletePrescription = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedPrescription = await Prescription.findByIdAndDelete(id);
 
-    if (!deletedPrescription) return res.status(404).json({ message: "Prescription not found" });
+    if (!deletedPrescription)
+      return res.status(404).json({ message: "Prescription not found" });
 
     res.status(200).json({ message: "Prescription deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting prescription", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting prescription", error: error.message });
+  }
+};
+
+exports.upsertPrescription = async (req, res) => {
+  try {
+    const { id } = req.params; // optional ID for update
+    const data = req.body;
+
+    let filter = {};
+    if (id) {
+      filter._id = id;
+    } else if (data._id) {
+      filter._id = data._id;
+    }
+
+    const prescription = await Prescription.findOneAndUpdate(filter, data, {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+
+    res.status(200).json(prescription);
+  } catch (error) {
+    console.error("Upsert prescription error:", error);
+    res.status(500).json({
+      message: "Error upserting prescription",
+      error: error.message,
+    });
+  }
+};
+
+exports.getPrescriptionsByPatientId = async (req, res) => {
+  try {
+    const { patientId, appointmentId } = req.query;
+
+    let query = {};
+    if (patientId) query.patient_id = patientId;
+    if (appointmentId) query.appointment_id = appointmentId;
+
+    const prescriptions = await Prescription.find(query)
+      .populate("patient_id", "first_name last_name phone")
+      .populate("doctor_id", "first_name last_name department employee_type")
+      .sort({ visit_date: -1 });
+
+    res.status(200).json(prescriptions);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching prescriptions", error: error.message });
   }
 };

@@ -1,5 +1,10 @@
 import api from "../axios";
-import { PrescriptionsInfo, HistoricalVisit } from "@/types/prescription";
+import {
+  PrescriptionsInfo,
+  HistoricalVisit,
+  GetPrescriptionsParams,
+  Prescription,
+} from "@/types/prescription";
 
 export const getPrescriptions = async (): Promise<PrescriptionsInfo[]> => {
   const res = await api.get("/prescriptions/getPrescriptions");
@@ -25,6 +30,18 @@ export const updatePrescription = async (
   payload: Partial<PrescriptionsInfo>
 ): Promise<PrescriptionsInfo> => {
   const res = await api.put(`/prescriptions/updatePrescription/${id}`, payload);
+  return res.data;
+};
+
+/**
+ * 🔹 Upsert Prescription
+ * If `payload._id` exists → updates the existing prescription.
+ * If not → creates a new prescription.
+ */
+export const upsertPrescription = async (
+  payload: Partial<PrescriptionsInfo>
+): Promise<PrescriptionsInfo> => {
+  const res = await api.post("/prescriptions/upsertPrescription", payload);
   return res.data;
 };
 
@@ -66,4 +83,17 @@ export const getPrescriptionHistoryByPatient = async (
     console.error("getPrescriptionHistoryByPatient error:", error);
     return [];
   }
+};
+
+export const getPrescriptionsByPatientId = async (
+  patientId: string,
+  appointmentId?: string
+): Promise<Prescription[]> => {
+  const params: any = { patientId };
+  if (appointmentId) params.appointmentId = appointmentId;
+
+  const res = await api.get("/prescriptions/getPrescriptionsByPatient", {
+    params,
+  });
+  return res.data;
 };

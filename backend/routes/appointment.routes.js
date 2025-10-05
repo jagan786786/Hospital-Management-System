@@ -166,41 +166,46 @@ router.get(
   appointmentController.getAppointmentsByDoctor
 );
 
+// GET /getAppointments?patientId=...&appointmentId=...&appointmentDate=YYYY-MM-DD
 router.get(
   "/getAppointmentsByParams",
-  /* 
+  /*
     #swagger.tags = ['Appointments']
-    #swagger.summary = 'Get appointments with filters or default to today'
-    #swagger.description = 'Retrieve appointments using optional query parameters. If no parameters are provided, the endpoint returns today’s appointments by default.'
-    
+    #swagger.summary = 'Fetch appointments by optional filters (defaults to today)'
+    #swagger.description = `Query params:
+      - patientId — filter by patient ObjectId
+      - appointmentId — filter by appointment ObjectId
+      - appointmentDate — filter by date (YYYY-MM-DD). If omitted (and appointmentId omitted), defaults to today's appointments.
+    `
     #swagger.parameters['patientId'] = {
       in: 'query',
-      description: 'Filter appointments by patient ID',
+      description: 'Filter by patient ObjectId',
       required: false,
-      schema: { type: 'string', example: '64f1a7b2e3d1c2f001234567' }
+      type: 'string',
+      example: '64f1a7b2e3d1c2f001234567'
     }
-
     #swagger.parameters['appointmentId'] = {
       in: 'query',
-      description: 'Filter appointments by appointment ID',
+      description: 'Filter by appointment ObjectId',
       required: false,
-      schema: { type: 'string', example: '64f1a7b2e3d1c2f001234890' }
+      type: 'string',
+      example: '64f1a7b2e3d1c2f001234890'
     }
-
     #swagger.parameters['appointmentDate'] = {
       in: 'query',
-      description: 'Filter appointments by date (format: YYYY-MM-DD)',
+      description: 'Filter by visit date (YYYY-MM-DD). If omitted returns today\'s appointments (unless appointmentId provided).',
       required: false,
-      schema: { type: 'string', example: '2023-09-11' }
+      type: 'string',
+      format: 'date',
+      example: '2023-09-11'
     }
-
     #swagger.responses[200] = {
-      description: "Successfully retrieved appointments",
+      description: "Array of simplified appointment objects",
       content: {
         "application/json": {
           schema: {
             type: "array",
-            items: { $ref: "#/components/schemas/AppointmentResponse" }
+            items: { $ref: "#/components/schemas/AppointmentSummary" }
           },
           example: [
             {
@@ -209,27 +214,12 @@ router.get(
               appointment_time: "10:30 AM",
               visit_type: "Consultation",
               status: "Scheduled"
-            },
-            {
-              id: "64f1a7b2e3d1c2f001234568",
-              doctor_id: "64f1a7b2e3d1c2f001234891",
-              appointment_time: "02:00 PM",
-              visit_type: "Follow-up",
-              status: "Completed"
             }
           ]
         }
       }
     }
-
-    #swagger.responses[500] = {
-      description: "Server error while fetching appointments",
-      content: {
-        "application/json": {
-          example: { message: "Error fetching appointments", error: "Database connection failed" }
-        }
-      }
-    }
+    #swagger.responses[500] = { description: "Server error while fetching appointments" }
   */
   appointmentController.getAppointmentsByParams
 );

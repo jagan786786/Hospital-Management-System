@@ -1,5 +1,9 @@
 import api from "../axios";
-import { AppointmentInfo, SimplifiedAppointment } from "@/types/appointment";
+import {
+  AppointmentInfo,
+  SimplifiedAppointment,
+  GetAppointmentsParams,
+} from "@/types/appointment";
 
 export const getAppointments = async (): Promise<AppointmentInfo[]> => {
   const res = await api.get("/appointments/getAppointments");
@@ -71,4 +75,19 @@ export const getTodaysOrSpecificAppointment = async (
     console.error("Error fetching appointments:", error);
     return [];
   }
+};
+
+export const getAppointmentsByParams = async (
+  patientId: string,
+  appointmentId?: string,
+  appointmentDate?: string
+): Promise<SimplifiedAppointment[]> => {
+  const params: any = { patientId };
+  if (appointmentId) params.appointmentId = appointmentId;
+  if (appointmentDate) params.appointmentDate = appointmentDate;
+
+  const res = await api.get("/appointments/getAppointmentsByParams", {
+    params,
+  });
+  return res.data;
 };

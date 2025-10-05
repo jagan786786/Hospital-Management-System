@@ -711,76 +711,50 @@
         "tags": [
           "Appointments"
         ],
-        "summary": "Get appointments with filters or default to today",
-        "description": "Retrieve appointments using optional query parameters. If no parameters are provided, the endpoint returns today’s appointments by default.",
+        "summary": "Fetch appointments by optional filters (defaults to today)",
+        "description": "Query params:\r  - patientId — filter by patient ObjectId\r  - appointmentId — filter by appointment ObjectId\r  - appointmentDate — filter by date (YYYY-MM-DD). If omitted (and appointmentId omitted), defaults to today's appointments.\r  ",
         "parameters": [
           {
             "name": "patientId",
             "in": "query",
-            "description": "Filter appointments by patient ID",
+            "description": "Filter by patient ObjectId",
             "required": false,
+            "example": "64f1a7b2e3d1c2f001234567",
             "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "string"
-                },
-                "example": {
-                  "type": "string",
-                  "example": "64f1a7b2e3d1c2f001234567"
-                }
-              }
+              "type": "string"
             }
           },
           {
             "name": "appointmentId",
             "in": "query",
-            "description": "Filter appointments by appointment ID",
+            "description": "Filter by appointment ObjectId",
             "required": false,
+            "example": "64f1a7b2e3d1c2f001234890",
             "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "string"
-                },
-                "example": {
-                  "type": "string",
-                  "example": "64f1a7b2e3d1c2f001234890"
-                }
-              }
+              "type": "string"
             }
           },
           {
             "name": "appointmentDate",
             "in": "query",
-            "description": "Filter appointments by date (format: YYYY-MM-DD)",
+            "description": "Filter by visit date (YYYY-MM-DD). If omitted returns today's appointments (unless appointmentId provided).",
             "required": false,
+            "format": "date",
+            "example": "2023-09-11",
             "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "string"
-                },
-                "example": {
-                  "type": "string",
-                  "example": "2023-09-11"
-                }
-              }
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Successfully retrieved appointments",
+            "description": "Array of simplified appointment objects",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AppointmentResponse"
+                    "$ref": "#/components/schemas/AppointmentSummary"
                   }
                 },
                 "example": [
@@ -790,28 +764,13 @@
                     "appointment_time": "10:30 AM",
                     "visit_type": "Consultation",
                     "status": "Scheduled"
-                  },
-                  {
-                    "id": "64f1a7b2e3d1c2f001234568",
-                    "doctor_id": "64f1a7b2e3d1c2f001234891",
-                    "appointment_time": "02:00 PM",
-                    "visit_type": "Follow-up",
-                    "status": "Completed"
                   }
                 ]
               }
             }
           },
           "500": {
-            "description": "Server error while fetching appointments",
-            "content": {
-              "application/json": {
-                "example": {
-                  "message": "Error fetching appointments",
-                  "error": "Database connection failed"
-                }
-              }
-            }
+            "description": "Server error while fetching appointments"
           }
         }
       }
@@ -1250,6 +1209,178 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/getPrescriptionsByPatientId/{id}": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Get prescription by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prescription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prescription details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prescription not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/getPrescriptionsByPatient": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Get prescriptions by patient ID (optional appointment filter)",
+        "description": "",
+        "parameters": [
+          {
+            "name": "patientId",
+            "in": "query",
+            "description": "ID of the patient",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appointmentId",
+            "in": "query",
+            "description": "Optional appointment ID to filter prescriptions",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of prescriptions for the patient",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prescription"
+                  }
+                },
+                "example": [
+                  {
+                    "_id": "68d93a037789f2d6170c3fbc",
+                    "appointment_id": "68d92f06a1a56a1a3f706798",
+                    "patient_id": {
+                      "_id": "68c9240bd092bc65a28ec1ef",
+                      "first_name": "John",
+                      "last_name": "Doe",
+                      "phone": "9876543210"
+                    },
+                    "doctor_id": {
+                      "employee_type": {
+                        "primary_role_type": {
+                          "role": "68c6fc96408320281fa3fdcd",
+                          "role_name": "Doctor"
+                        },
+                        "secondary_role_type": []
+                      },
+                      "_id": "68d0d29d2cd8e6adc84809b6",
+                      "first_name": "Neha",
+                      "last_name": "Reddy",
+                      "department": "General Surgery"
+                    },
+                    "visit_date": "2025-09-28T00:00:00.000Z",
+                    "blood_pressure": "120/80",
+                    "pulse": "72",
+                    "height": "190",
+                    "weight": "95",
+                    "bmi": "26.3",
+                    "spo2": "100",
+                    "complaints": [
+                      "fever",
+                      "vomiting"
+                    ],
+                    "medicines": [
+                      {
+                        "name": "Paracetamol",
+                        "dosage": "500mg",
+                        "_id": "68d93a037789f2d6170c3fbd"
+                      }
+                    ],
+                    "advice": "Sleep properly",
+                    "tests_prescribed": "Full Body checkup",
+                    "next_visit": "2 days",
+                    "status": "Draft",
+                    "createdAt": "2025-09-28T13:37:07.653Z",
+                    "updatedAt": "2025-09-28T13:37:07.653Z",
+                    "__v": 0
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "Error fetching prescriptions"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/upsertPrescription": {
+      "post": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Create or update a prescription (upsert)",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Prescription created or updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prescription"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload"
+          },
+          "500": {
+            "description": "Server error while upserting prescription"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prescription"
+              }
+            }
           }
         }
       }

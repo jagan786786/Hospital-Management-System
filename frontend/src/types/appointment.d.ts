@@ -33,3 +33,9 @@ export interface SimplifiedAppointment {
   visit_type: string;
   status: "Scheduled" | "In-Progress" | "Completed" | "Cancelled";
 }
+
+interface GetAppointmentsParams {
+  patientId?: string;
+  appointmentId?: string;
+  appointmentDate?: string;
+}

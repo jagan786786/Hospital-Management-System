@@ -48,3 +48,41 @@ export interface HistoricalVisit {
   bmi?: string | null;
   spo2?: string | null;
 }
+
+interface GetPrescriptionsParams {
+  patientId: string;
+  appointmentId?: string;
+}
+
+export interface Prescription {
+  _id: string;
+  appointment_id: string;
+  patient_id: {
+    _id: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+  };
+  doctor_id: {
+    _id: string;
+    first_name: string;
+    last_name: string;
+    department: string;
+    employee_type: any;
+  };
+  visit_date: string;
+  blood_pressure?: string;
+  pulse?: string;
+  height?: string;
+  weight?: string;
+  bmi?: string;
+  spo2?: string;
+  complaints: string[];
+  medicines: any[];
+  advice?: string;
+  tests_prescribed?: string;
+  next_visit?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
