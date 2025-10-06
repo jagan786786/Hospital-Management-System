@@ -1,11 +1,12 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const appointmentController = require('../controllers/appointment.controller');
+const appointmentController = require("../controllers/appointment.controller");
 
 // CRUD APIs
-router.post('/createAppointment/',
-  
-    /* 
+router.post(
+  "/createAppointment/",
+
+  /* 
     #swagger.tags = ['Appointments']
     #swagger.summary = 'Create a new appointment'
     #swagger.requestBody = {
@@ -30,13 +31,13 @@ router.post('/createAppointment/',
     #swagger.responses[400] = { description: "Validation error" }
     #swagger.responses[500] = { description: "Server error" }
   */
-  
-  
-  appointmentController.createAppointment);
 
+  appointmentController.createAppointment
+);
 
-router.get('/getAppointments/', 
-  
+router.get(
+  "/getAppointments/",
+
   /* 
     #swagger.tags = ['Appointments']
     #swagger.summary = 'Fetch all appointments'
@@ -52,14 +53,14 @@ router.get('/getAppointments/',
       }
     }
   */
-  
-  
-  appointmentController.getAppointments);
 
+  appointmentController.getAppointments
+);
 
-router.get('/getAppointmentById/:id', 
-  
-    /* 
+router.get(
+  "/getAppointmentById/:id",
+
+  /* 
     #swagger.tags = ['Appointments']
     #swagger.summary = 'Get an appointment by ID'
     #swagger.parameters['id'] = {
@@ -78,13 +79,13 @@ router.get('/getAppointmentById/:id',
     }
     #swagger.responses[404] = { description: "Appointment not found" }
   */
-  
-  
-  appointmentController.getAppointmentById);
 
+  appointmentController.getAppointmentById
+);
 
-router.put('/updateAppointment/:id', 
-  
+router.put(
+  "/updateAppointment/:id",
+
   /* 
     #swagger.tags = ['Appointments']
     #swagger.summary = 'Update appointment details'
@@ -106,13 +107,14 @@ router.put('/updateAppointment/:id',
     #swagger.responses[200] = { description: "Appointment updated successfully" }
     #swagger.responses[404] = { description: "Appointment not found" }
   */
-  
-  appointmentController.updateAppointment);
 
+  appointmentController.updateAppointment
+);
 
-router.delete('/deleteAppointment/:id',
-  
-   /* 
+router.delete(
+  "/deleteAppointment/:id",
+
+  /* 
     #swagger.tags = ['Appointments']
     #swagger.summary = 'Delete appointment by ID'
     #swagger.parameters['id'] = {
@@ -124,10 +126,9 @@ router.delete('/deleteAppointment/:id',
     #swagger.responses[200] = { description: "Appointment deleted successfully" }
     #swagger.responses[404] = { description: "Appointment not found" }
   */
- 
-  appointmentController.deleteAppointment);
 
-
+  appointmentController.deleteAppointment
+);
 
 // Get appointments by doctor (with optional visit_date filter)
 router.get(
@@ -165,6 +166,62 @@ router.get(
   appointmentController.getAppointmentsByDoctor
 );
 
-
+// GET /getAppointments?patientId=...&appointmentId=...&appointmentDate=YYYY-MM-DD
+router.get(
+  "/getAppointmentsByParams",
+  /*
+    #swagger.tags = ['Appointments']
+    #swagger.summary = 'Fetch appointments by optional filters (defaults to today)'
+    #swagger.description = `Query params:
+      - patientId — filter by patient ObjectId
+      - appointmentId — filter by appointment ObjectId
+      - appointmentDate — filter by date (YYYY-MM-DD). If omitted (and appointmentId omitted), defaults to today's appointments.
+    `
+    #swagger.parameters['patientId'] = {
+      in: 'query',
+      description: 'Filter by patient ObjectId',
+      required: false,
+      type: 'string',
+      example: '64f1a7b2e3d1c2f001234567'
+    }
+    #swagger.parameters['appointmentId'] = {
+      in: 'query',
+      description: 'Filter by appointment ObjectId',
+      required: false,
+      type: 'string',
+      example: '64f1a7b2e3d1c2f001234890'
+    }
+    #swagger.parameters['appointmentDate'] = {
+      in: 'query',
+      description: 'Filter by visit date (YYYY-MM-DD). If omitted returns today\'s appointments (unless appointmentId provided).',
+      required: false,
+      type: 'string',
+      format: 'date',
+      example: '2023-09-11'
+    }
+    #swagger.responses[200] = {
+      description: "Array of simplified appointment objects",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: { $ref: "#/components/schemas/AppointmentSummary" }
+          },
+          example: [
+            {
+              id: "64f1a7b2e3d1c2f001234567",
+              doctor_id: "64f1a7b2e3d1c2f001234890",
+              appointment_time: "10:30 AM",
+              visit_type: "Consultation",
+              status: "Scheduled"
+            }
+          ]
+        }
+      }
+    }
+    #swagger.responses[500] = { description: "Server error while fetching appointments" }
+  */
+  appointmentController.getAppointmentsByParams
+);
 
 module.exports = router;

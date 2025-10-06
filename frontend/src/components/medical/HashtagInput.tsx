@@ -10,7 +10,12 @@ interface HashtagInputProps {
   className?: string;
 }
 
-export function HashtagInput({ value, onChange, placeholder = "Type complaints and press space...", className }: HashtagInputProps) {
+export function HashtagInput({
+  value,
+  onChange,
+  placeholder = "Type complaints and press space or enter...",
+  className,
+}: HashtagInputProps) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -24,33 +29,30 @@ export function HashtagInput({ value, onChange, placeholder = "Type complaints a
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
-      addTag();
+      addComplaint();
     } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
-      removeTag(value.length - 1);
+      removeComplaint(value.length - 1);
     }
   };
 
-  const addTag = () => {
+  const addComplaint = () => {
     if (inputValue.trim()) {
-      let tag = inputValue.trim();
-      if (!tag.startsWith("#")) {
-        tag = "#" + tag;
-      }
-      if (!value.includes(tag)) {
-        onChange([...value, tag]);
+      const complaint = inputValue.trim().toLowerCase();
+      if (!value.includes(complaint)) {
+        onChange([...value, complaint]);
       }
       setInputValue("");
       setIsTyping(false);
     }
   };
 
-  const removeTag = (index: number) => {
-    const newTags = value.filter((_, i) => i !== index);
-    onChange(newTags);
+  const removeComplaint = (index: number) => {
+    const newComplaints = value.filter((_, i) => i !== index);
+    onChange(newComplaints);
   };
 
-  const handleTagClick = (index: number) => {
-    removeTag(index);
+  const handleComplaintClick = (index: number) => {
+    removeComplaint(index);
   };
 
   return (
@@ -62,37 +64,41 @@ export function HashtagInput({ value, onChange, placeholder = "Type complaints a
       onClick={() => inputRef.current?.focus()}
     >
       <div className="flex flex-wrap gap-2 mb-2">
-        {value.map((tag, index) => (
+        {value.map((complaint, index) => (
           <Badge
             key={index}
             variant="secondary"
             className="bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer transition-smooth px-3 py-1"
-            onClick={() => handleTagClick(index)}
+            onClick={() => handleComplaintClick(index)}
           >
-            {tag}
+            {complaint}
             <X className="w-3 h-3 ml-1" />
           </Badge>
         ))}
         {isTyping && inputValue && (
-          <Badge variant="outline" className="bg-muted/50 text-muted-foreground">
-            {inputValue.startsWith("#") ? inputValue : "#" + inputValue}
+          <Badge
+            variant="outline"
+            className="bg-muted/50 text-muted-foreground"
+          >
+            {inputValue}
           </Badge>
         )}
       </div>
-      
+
       <input
         ref={inputRef}
         type="text"
         value={inputValue}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        onBlur={addTag}
+        onBlur={addComplaint}
         placeholder={value.length === 0 ? placeholder : ""}
         className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
       />
-      
+
       <div className="text-xs text-muted-foreground mt-2">
-        Type complaints and press space to create hashtags. These will be linked to medicine recommendations.
+        Type complaints and press space or enter to add them. These will be used
+        for medicine recommendations.
       </div>
     </div>
   );

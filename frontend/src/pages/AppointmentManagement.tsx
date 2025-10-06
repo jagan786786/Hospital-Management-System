@@ -490,7 +490,7 @@ export default function AppointmentManagement() {
                             variant="outline"
                             className="h-8 w-8 p-0"
                             onClick={() =>
-                              handleViewHistory(appointment.patient)
+                              handleViewHistory(appointment.patientDetail._id)
                             }
                             title="View Patient History"
                           >
@@ -504,7 +504,7 @@ export default function AppointmentManagement() {
                               variant="outline"
                               className="h-8 w-8 p-0 text-primary hover:text-primary"
                               onClick={() =>
-                                handleViewHistory(appointment.patient)
+                                handleViewHistory(appointment.patientDetail._id)
                               }
                               title="Edit Prescription"
                             >

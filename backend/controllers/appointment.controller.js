@@ -1,31 +1,45 @@
-const Appointment = require('../models/appointment.model');
-const Patient = require('../models/patient.model');
-const Employee = require('../models/employee.model');
+const Appointment = require("../models/appointment.model");
+const Patient = require("../models/patient.model");
+const Employee = require("../models/employee.model");
 
 // ✅ Create Appointment
 exports.createAppointment = async (req, res) => {
   try {
-    const { patient, doctor, visit_date, visit_time, visit_type, doctor_department, additional_notes } = req.body;
+    const {
+      patient,
+      doctor,
+      visit_date,
+      visit_time,
+      visit_type,
+      doctor_department,
+      additional_notes,
+    } = req.body;
 
     // check if patient exists
     const existingPatient = await Patient.findById(patient);
     if (!existingPatient) {
-      return res.status(400).json({ message: "Patient must be onboarded before creating appointment" });
+      return res.status(400).json({
+        message: "Patient must be onboarded before creating appointment",
+      });
     }
 
-   // check if doctor exists + populate roles
+    // check if doctor exists + populate roles
     const existingDoctor = await Employee.findById(doctor);
     if (!existingDoctor) {
       return res.status(400).json({ message: "Invalid doctor selected" });
     }
 
     // check if any of the roles is "Doctor"
-    const hasDoctorRole = existingDoctor.employee_type.primary_role_type?.role_name === "Doctor" || existingDoctor.employee_type.secondary_role_type?.some(
-    (r) => r.role_name === "Doctor");
+    const hasDoctorRole =
+      existingDoctor.employee_type.primary_role_type?.role_name === "Doctor" ||
+      existingDoctor.employee_type.secondary_role_type?.some(
+        (r) => r.role_name === "Doctor"
+      );
     if (!hasDoctorRole) {
-      return res.status(400).json({ message: "Selected employee does not have Doctor role" });
+      return res
+        .status(400)
+        .json({ message: "Selected employee does not have Doctor role" });
     }
-
 
     const appointment = new Appointment({
       patient,
@@ -34,13 +48,15 @@ exports.createAppointment = async (req, res) => {
       visit_time,
       visit_type,
       doctor_department,
-      additional_notes
+      additional_notes,
     });
 
     await appointment.save();
     res.status(201).json(appointment);
   } catch (error) {
-    res.status(500).json({ message: "Error creating appointment", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error creating appointment", error: error.message });
   }
 };
 
@@ -52,7 +68,9 @@ exports.getAppointments = async (req, res) => {
       .populate("doctor", "first_name last_name department employee_type");
     res.status(200).json(appointments);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching appointments", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching appointments", error: error.message });
   }
 };
 
@@ -70,7 +88,9 @@ exports.getAppointmentById = async (req, res) => {
 
     res.status(200).json(appointment);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching appointment", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching appointment", error: error.message });
   }
 };
 
@@ -93,7 +113,9 @@ exports.updateAppointment = async (req, res) => {
 
     res.status(200).json(updatedAppointment);
   } catch (error) {
-    res.status(500).json({ message: "Error updating appointment", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error updating appointment", error: error.message });
   }
 };
 
@@ -109,10 +131,11 @@ exports.deleteAppointment = async (req, res) => {
 
     res.status(200).json({ message: "Appointment deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting appointment", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error deleting appointment", error: error.message });
   }
 };
-
 
 // ✅ Get All appointments for a specific doctor, optionally filtered by visit_date
 
@@ -157,3 +180,48 @@ exports.getAppointmentsByDoctor = async (req, res) => {
   }
 };
 
+exports.getAppointmentsByParams = async (req, res) => {
+  try {
+    const { patientId, appointmentId, appointmentDate } = req.query;
+
+    let query = {};
+
+    if (patientId) query.patient = patientId;
+    if (appointmentId) query._id = appointmentId;
+    if (appointmentDate) {
+      const start = new Date(appointmentDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(appointmentDate);
+      end.setHours(23, 59, 59, 999);
+      query.visit_date = { $gte: start, $lte: end };
+    }
+
+    // If no date filter provided, default to today's appointments
+    if (!appointmentDate && !appointmentId) {
+      const today = new Date();
+      const start = new Date(today.setHours(0, 0, 0, 0));
+      const end = new Date(today.setHours(23, 59, 59, 999));
+      query.visit_date = { $gte: start, $lte: end };
+    }
+
+    const appointments = await Appointment.find(query)
+      .populate("doctor", "_id") // only need doctor_id
+      .lean();
+
+    // Map to simplified format expected by frontend
+    const simplified = appointments.map((app) => ({
+      id: app._id.toString(),
+      doctor_id: app.doctor._id.toString(),
+      appointment_time: app.visit_time,
+      visit_type: app.visit_type,
+      status: app.status,
+    }));
+
+    res.status(200).json(simplified);
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching appointments", error: error.message });
+  }
+};

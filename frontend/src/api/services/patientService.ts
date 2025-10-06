@@ -7,6 +7,11 @@ export const getPatients = async (): Promise<PatientRecord[]> => {
   return res.data;
 };
 
+export const getPatientsById = async (id: string): Promise<PatientRecord> => {
+  const res = await api.get(`/patients/${id}`);
+  return res.data;
+};
+
 export const registerPatient = async (patient: Partial<PatientRecord>) => {
   const res = await api.post("/patients/regsiterPatient", patient);
   return res.data;
@@ -36,10 +41,11 @@ export const scheduleAppointment = async (
   });
 };
 
-export const deleteAppointment = async (appointmentId: string): Promise<void> => {
+export const deleteAppointment = async (
+  appointmentId: string
+): Promise<void> => {
   await api.delete(`/appointments/deleteAppointment/${appointmentId}`);
 };
-
 
 // ✅ Get future appointments
 export const getFutureAppointments = async (): Promise<{
