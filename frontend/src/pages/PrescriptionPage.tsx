@@ -376,7 +376,7 @@ export default function PrescriptionPage() {
               bmi: todayPresc.bmi || "",
               spo2: todayPresc.spo2 || "",
               // ✅ Add this line to track existing prescription
-              prescriptionId: todayPresc._id || todayPresc.id,
+              prescriptionId: todayPresc._id || todayPresc._id,
             }));
           } else {
             // No prescription for today → clear prescriptionId to ensure upsert creates new

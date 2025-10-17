@@ -97,3 +97,19 @@ export const getPrescriptionsByPatientId = async (
   });
   return res.data;
 };
+
+export const getPrescriptionsByDoctorId = async (
+  doctorId: string,
+  since?: string
+): Promise<Prescription[]> => {
+  if (!doctorId) throw new Error("doctorId is required");
+
+  const params: any = { doctorId };
+  if (since) params.since = since;
+
+  const res = await api.get("/prescriptions/getPrescriptionsByDoctor", {
+    params,
+  });
+
+  return res.data;
+};

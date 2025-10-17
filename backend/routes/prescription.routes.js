@@ -262,4 +262,91 @@ router.post(
   prescriptionController.upsertPrescription
 );
 
+router.get(
+  "/suggestions",
+  /* 
+    #swagger.tags = ['Prescriptions']
+    #swagger.summary = 'Get top medicine suggestions for a doctor based on complaints'
+    #swagger.parameters['doctorId'] = {
+        in: 'query',
+        description: 'ID of the doctor',
+        required: true,
+        type: 'string'
+    }
+    #swagger.parameters['complaints'] = {
+        in: 'query',
+        description: 'Array of complaints to match',
+        required: true,
+        type: 'array',
+        items: { type: 'string' }
+    }
+    #swagger.responses[200] = {
+      description: "List of top medicine suggestions",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: { $ref: "#/components/schemas/MedicineSuggestion" }
+          }
+        }
+      }
+    }
+    #swagger.responses[400] = { description: "Missing doctorId or complaints" }
+    #swagger.responses[500] = { description: "Server error while fetching suggestions" }
+  */
+  prescriptionController.getDoctorMedicineSuggestions
+);
+
+// ✅ Get all prescriptions by doctor (used by getDoctorMedicineSuggestions)
+router.get(
+  "/getPrescriptionsByDoctor",
+  /* 
+    #swagger.tags = ['Prescriptions']
+    #swagger.summary = 'Get prescriptions for a doctor within a date range'
+    #swagger.parameters['doctorId'] = {
+        in: 'query',
+        description: 'ID of the doctor',
+        required: true,
+        type: 'string'
+    }
+    #swagger.parameters['since'] = {
+        in: 'query',
+        description: 'ISO date string (YYYY-MM-DD). Defaults to last 30 days if not provided.',
+        required: false,
+        type: 'string'
+    }
+    #swagger.responses[200] = {
+      description: "List of prescriptions for the doctor",
+      content: {
+        "application/json": {
+          schema: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                medicines: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      dosage: { type: "string" },
+                      duration: { type: "string" }
+                    }
+                  }
+                },
+                complaints: { type: "array", items: { type: "string" } },
+                visit_date: { type: "string", format: "date-time" }
+              }
+            }
+          }
+        }
+      }
+    }
+    #swagger.responses[400] = { description: "Missing doctorId" }
+    #swagger.responses[500] = { description: "Server error while fetching prescriptions" }
+  */
+  prescriptionController.getPrescriptionsByDoctor
+);
+
 module.exports = router;

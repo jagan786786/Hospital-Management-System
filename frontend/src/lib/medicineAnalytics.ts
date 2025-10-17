@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Medicine } from "@/types/medical";
+import { getPrescriptionsByDoctorId } from "@/api/services/prescriptionService";
 
 export interface MedicineSuggestion extends Medicine {
   confidence: number;
@@ -18,21 +19,23 @@ export async function getDoctorMedicineSuggestions(
     });
 
     // Get doctor's prescriptions from last 30 days, prioritizing recent ones
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    console.log(
-      "Looking for prescriptions after:",
-      thirtyDaysAgo.toISOString().split("T")[0]
-    );
+    // const thirtyDaysAgo = new Date();
+    // thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // console.log(
+    //   "Looking for prescriptions after:",
+    //   thirtyDaysAgo.toISOString().split("T")[0]
+    // );
 
-    const { data: prescriptions, error } = await supabase
-      .from("prescriptions")
-      .select("medicines, complaints, visit_date")
-      .eq("doctor_id", doctorId)
-      .gte("visit_date", thirtyDaysAgo.toISOString().split("T")[0])
-      .order("visit_date", { ascending: false });
+    // const { data: prescriptions, error } = await supabase
+    //   .from("prescriptions")
+    //   .select("medicines, complaints, visit_date")
+    //   .eq("doctor_id", doctorId)
+    //   .gte("visit_date", thirtyDaysAgo.toISOString().split("T")[0])
+    //   .order("visit_date", { ascending: false });
 
-    if (error) throw error;
+    // if (error) throw error;
+
+    const prescriptions = await getPrescriptionsByDoctorId(doctorId);
 
     console.log("Found prescriptions:", prescriptions?.length || 0);
     console.log("Prescription data:", prescriptions);
