@@ -3,7 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, matchPath } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  matchPath,
+} from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { MedicalSidebar } from "@/components/medical/MedicalSidebar";
 import PatientList from "./pages/PatientList";
@@ -13,6 +19,7 @@ import PatientRecords from "./pages/PatientRecords";
 import AppointmentScheduling from "./pages/AppointmentScheduling";
 import AppointmentManagement from "./pages/AppointmentManagement";
 import MedicineStock from "./pages/MedicineStock";
+import Billing from "./pages/Billing";
 import StockReports from "./pages/StockReports";
 import EmployeeOnboarding from "./pages/EmployeeOnboarding";
 import EmployeeList from "./pages/EmployeeList";
@@ -123,6 +130,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <MedicineStock />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/billing"
+                  element={
+                    <ProtectedRoute>
+                      <Billing />
                     </ProtectedRoute>
                   }
                 />

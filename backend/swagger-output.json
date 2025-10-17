@@ -1385,6 +1385,138 @@
         }
       }
     },
+    "/api/prescriptions/suggestions": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Get top medicine suggestions for a doctor based on complaints",
+        "description": "",
+        "parameters": [
+          {
+            "name": "doctorId",
+            "in": "query",
+            "description": "ID of the doctor",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "complaints",
+            "in": "query",
+            "description": "Array of complaints to match",
+            "required": true,
+            "items": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of top medicine suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MedicineSuggestion"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing doctorId or complaints"
+          },
+          "500": {
+            "description": "Server error while fetching suggestions"
+          }
+        }
+      }
+    },
+    "/api/prescriptions/getPrescriptionsByDoctor": {
+      "get": {
+        "tags": [
+          "Prescriptions"
+        ],
+        "summary": "Get prescriptions for a doctor within a date range",
+        "description": "",
+        "parameters": [
+          {
+            "name": "doctorId",
+            "in": "query",
+            "description": "ID of the doctor",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO date string (YYYY-MM-DD). Defaults to last 30 days if not provided.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of prescriptions for the doctor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "medicines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "dosage": {
+                              "type": "string"
+                            },
+                            "duration": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "complaints": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "visit_date": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing doctorId"
+          },
+          "500": {
+            "description": "Server error while fetching prescriptions"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "description": "",

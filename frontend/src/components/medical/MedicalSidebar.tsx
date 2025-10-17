@@ -79,6 +79,7 @@ export function MedicalSidebar() {
       defaultOpen: false,
       items: [
         { title: "Medicine Stock", url: "/medicine-stock", icon: Activity },
+        { title: "Billing", url: "/billing", icon: FileText },
         { title: "Stock Reports", url: "/stock-reports", icon: FileText },
       ],
     },
