@@ -122,6 +122,7 @@ export default function AppointmentScheduling() {
   const [lastVisitDate, setLastVisitDate] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdhoc, setIsAdhoc] = useState(false);
 
   const form = useForm<AppointmentForm>({
     resolver: zodResolver(appointmentSchema),
@@ -320,6 +321,16 @@ export default function AppointmentScheduling() {
     if (!selectedDate || !selectedDoctor || !selectedDoctor.availability)
       return [];
 
+    //If the doctor is on special availability
+    if (isAdhoc) {
+      const slots: string[] = [];
+      for (let hour = 0; hour < 24; hour++) {
+        const hourStr = hour.toString().padStart(2, "0");
+        slots.push(`${hourStr}:00`);
+        slots.push(`${hourStr}:30`);
+      }
+      return slots;
+    }
     // Consistent day name comparison
     const dayName = selectedDate
       .toLocaleString("en-US", { weekday: "long" })
@@ -753,6 +764,33 @@ export default function AppointmentScheduling() {
                       />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isAdhoc"
+                render={() => (
+                  <FormItem className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isAdhoc}
+                        onChange={(e) => setIsAdhoc(e.target.checked)}
+                        id="adhoc"
+                        className="h-5 w-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                      />
+                      <label
+                        htmlFor="adhoc"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Special Availability
+                      </label>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Allow appointments outside normal schedule
+                    </span>
                   </FormItem>
                 )}
               />
