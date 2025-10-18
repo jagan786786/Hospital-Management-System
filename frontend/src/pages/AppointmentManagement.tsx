@@ -64,6 +64,7 @@ import { getEmployeeById } from "../api/services/employeService";
 import { AppointmentInfo } from "@/types/appointment";
 import { PatientRecord } from "@/types/patient";
 import { Employee } from "@/types/employee";
+import { useAuth } from "@/context/AuthContext";
 
 interface AppointmentWithDetails extends AppointmentInfo {
   patientDetail: PatientRecord;
@@ -72,6 +73,7 @@ interface AppointmentWithDetails extends AppointmentInfo {
 
 export default function AppointmentManagement() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
     []
   );
@@ -114,7 +116,9 @@ export default function AppointmentManagement() {
         })
       );
 
-      setAppointments(detailedAppointments);
+      const doctorAppointments = detailedAppointments.filter((appt) => appt.doctorDetail?._id === user?.id)
+
+      setAppointments(doctorAppointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       toast({
