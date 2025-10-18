@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -8,21 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -39,59 +23,45 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
-  CalendarIcon,
-  Search,
-  Clock,
-  User,
-  Stethoscope,
-  Building2,
-  FileText,
-} from "lucide-react";
-import { format } from "date-fns";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import {
+  Building2,
+  CalendarIcon,
+  Clock,
+  FileText,
+  Search,
+  Stethoscope,
+  User,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { z } from "zod";
 // import { supabase } from "@/integrations/supabase/client";
+import {
+  createAppointment,
+  getAppointments,
+} from "@/api/services/appointmentService";
+import { getEmployees } from "@/api/services/employeService";
+import { getPatients } from "@/api/services/patientService";
 import { toast } from "@/hooks/use-toast";
 import { cache } from "@/lib/cache";
-import { getPatients } from "@/api/services/patientService";
-import { getEmployees } from "@/api/services/employeService";
-import {
-  getAppointments,
-  createAppointment,
-} from "@/api/services/appointmentService";
-
-// Indian Medical Departments
-const INDIAN_DEPARTMENTS = [
-  "General Medicine",
-  "Pediatrics",
-  "Obstetrics & Gynecology",
-  "Surgery",
-  "Orthopedics",
-  "Cardiology",
-  "Neurology",
-  "Psychiatry",
-  "Dermatology",
-  "ENT",
-  "Ophthalmology",
-  "Anesthesiology",
-  "Radiology",
-  "Pathology",
-  "Emergency Medicine",
-  "Pulmonology",
-  "Gastroenterology",
-  "Nephrology",
-  "Endocrinology",
-  "Rheumatology",
-  "Oncology",
-  "Urology",
-  "Plastic Surgery",
-  "Neurosurgery",
-  "Cardiac Surgery",
-];
 
 const appointmentSchema = z.object({
   patient_id: z.string().min(1, "Please select a patient"),
@@ -170,13 +140,8 @@ export default function AppointmentScheduling() {
 
   useEffect(() => {
     if (preselectedPatientId && patients.length > 0) {
-      console.log(
-        "AppointmentScheduling: Setting preselected patient:",
-        preselectedPatientId
-      );
       const patient = patients.find((p) => p.id === preselectedPatientId);
       if (patient) {
-        console.log("AppointmentScheduling: Found patient:", patient);
         setSelectedPatient(patient);
         form.setValue("patient_id", patient.id);
         checkLastVisit(patient.id);
@@ -241,7 +206,6 @@ export default function AppointmentScheduling() {
           specialization: doc.specialization || "",
           department: doc.department || "",
         }));
-      console.log("Doctor deta;s", doctors);
       setDoctors(doctors);
       cache.set("doctors", doctors, 600000);
     } catch (error) {
@@ -266,10 +230,6 @@ export default function AppointmentScheduling() {
           (a, b) =>
             new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime()
         );
-      console.log(
-        "AppointmentScheduling: Fetched appointments for last visit check:",
-        completedAppointments
-      );
       if (completedAppointments.length > 0) {
         setLastVisitDate(completedAppointments[0].visit_date);
       } else {
@@ -282,17 +242,11 @@ export default function AppointmentScheduling() {
   };
 
   const getAvailableVisitTypes = () => {
-    console.log(
-      "AppointmentScheduling: Getting visit types, lastVisitDate:",
-      lastVisitDate
-    );
-
     const types = [
       { value: "Consultation", label: "Consultation" },
       { value: "Follow-up", label: "Follow up" },
       { value: "others", label: "Others" },
     ];
-    console.log("last visit:", lastVisitDate);
     // Add follow-up if patient visited within 7 days
     if (lastVisitDate) {
       const lastVisit = new Date(lastVisitDate);
@@ -301,21 +255,16 @@ export default function AppointmentScheduling() {
         (today.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      console.log("AppointmentScheduling: Days since last visit:", daysDiff);
-
       if (daysDiff <= 7) {
         types.unshift({ value: "Follow-up", label: "Follow up" });
-        console.log("AppointmentScheduling: Added follow-up option");
       }
     }
 
     // Add first-time visit if no previous appointments exist
     if (!lastVisitDate) {
       types.unshift({ value: "First Time Visit", label: "First time visit" });
-      console.log("AppointmentScheduling: Added first-time visit option");
     }
 
-    console.log("AppointmentScheduling: Available visit types:", types);
     return types;
   };
   // On submit of the form
@@ -500,10 +449,6 @@ export default function AppointmentScheduling() {
                                     key={patient.id}
                                     value={`${patient.first_name} ${patient.last_name}`}
                                     onSelect={() => {
-                                      console.log(
-                                        "AppointmentScheduling: Patient selected:",
-                                        patient
-                                      );
                                       setSelectedPatient(patient);
                                       field.onChange(patient.id);
                                       setPatientOpen(false);
@@ -736,30 +681,16 @@ export default function AppointmentScheduling() {
                         <Building2 className="h-4 w-4" />
                         Department
                       </FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          console.log(
-                            "AppointmentScheduling: Visit type selected:",
-                            value
-                          );
-                          field.onChange(value);
-                        }}
-                        value={field.value}
-                        key={`visit-type-${selectedPatient?.id || "none"}`}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select department (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {INDIAN_DEPARTMENTS.map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                      <FormControl>
+                        <Input
+                          placeholder="Department"
+                          value={selectedDoctor?.department || ""}
+                          disabled
+                          {...field}
+                        />
+                      </FormControl>
+
                       <FormMessage />
                     </FormItem>
                   )}

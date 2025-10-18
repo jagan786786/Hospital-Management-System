@@ -28,6 +28,56 @@ const employeeSchema = new mongoose.Schema({
     ],
   },
 
+  availability: [
+    {
+      days: {
+        type: [String],
+        required: true,
+        validate: {
+          validator: function (v) {
+            return v.every((day) =>
+              [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+              ].includes(day)
+            );
+          },
+          message: (props) => `${props.value} contains invalid day(s)`,
+        },
+      },
+      time: {
+        in_time: {
+          type: Number,
+          required: true,
+          validate: {
+            validator: function (v) {
+              return Number.isInteger(v) && v >= 0 && v <= 23;
+            },
+            message: (props) =>
+              `${props.value} must be a valid 24-hour time (0–23)`,
+          },
+        },
+        out_time: {
+          type: Number,
+          required: true,
+          validate: {
+            validator: function (v) {
+              if (!Number.isInteger(v) || v < 0 || v > 23) return false;
+              return v > this.time.in_time;
+            },
+            message: (props) =>
+              `out_time (${props.value}) must be greater than in_time (${this.time.in_time}) and within 0–23 range`,
+          },
+        },
+      },
+    },
+  ],
+
   department: { type: String, default: null },
   salary: { type: Number, default: null },
   address: { type: String, default: null },
