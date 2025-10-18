@@ -28,12 +28,14 @@ exports.createEmployee = async (req, res) => {
     email,
     phone,
     employee_type,
+    availability,
     department,
     salary,
     address,
     emergency_contact_name,
     emergency_contact_phone,
     date_of_joining,
+  
   } = req.body;
 
   try {
@@ -118,6 +120,7 @@ exports.createEmployee = async (req, res) => {
         },
         secondary_role_type: secondaryRoles,
       },
+      availability: availability,
       department: department || null,
       salary: salary !== undefined && salary !== "" ? parseFloat(salary) : null,
       address: address || null,

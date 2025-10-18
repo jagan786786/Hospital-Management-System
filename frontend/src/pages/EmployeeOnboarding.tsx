@@ -21,7 +21,7 @@ import {
 // import Select from "react-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserPlus, Building2 } from "lucide-react";
+import { UserPlus, Building2, Calendar, Clock } from "lucide-react";
 import { createEmployee } from "@/api/services/employeService";
 import { getRoles } from "@/api/services/employeService"; // ⬅️ NEW service import
 // Add these from first code:
@@ -41,6 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button"; // already imported
+import { Checkbox } from "@radix-ui/react-checkbox";
 
 // ✅ Zod schema
 const employeeSchema = z.object({
@@ -58,6 +59,16 @@ const employeeSchema = z.object({
   date_of_joining: z.string().optional(),
 });
 
+const daysOfWeek = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export default function EmployeeOnboarding() {
@@ -68,6 +79,9 @@ export default function EmployeeOnboarding() {
   // Instead, for primary role you can keep a similar pattern as field.value if you want badge-style UI:
   const [primaryRoleSelected, setPrimaryRoleSelected] =
     useState<RoleOption | null>(null);
+  const [availability, setAvailability] = useState<
+    { day: string; start_time: string; end_time: string }[]
+  >([]);
 
   // ✅ Fetch roles from API
   useEffect(() => {
@@ -106,6 +120,56 @@ export default function EmployeeOnboarding() {
     },
   });
 
+  const isDoctorSelected = (() => {
+    const primaryRoleLabel = roles.find(
+      (r) => r.value === form.watch("primary_role")
+    )?.label;
+
+    const secondaryRoleLabels = (form.watch("secondary_roles") || []).map(
+      (roleId: string) => roles.find((r) => r.value === roleId)?.label
+    );
+
+    return (
+      primaryRoleLabel === "Doctor" || secondaryRoleLabels.includes("Doctor")
+    );
+  })();
+
+  const handleAvailabilityChange = (
+    day: string,
+    type: "toggle" | "start" | "end",
+    value?: string | boolean
+  ) => {
+    setAvailability((prev) => {
+      const exists = prev.find((a) => a.day === day);
+
+      if (type === "toggle") {
+        if (value) {
+          // add new empty day entry
+          return [...prev, { day, start_time: "09:00", end_time: "17:00" }];
+        } else {
+          // remove the day entry
+          return prev.filter((a) => a.day !== day);
+        }
+      }
+
+      if (exists) {
+        return prev.map((a) =>
+          a.day === day ? { ...a, [`${type}_time`]: value as string } : a
+        );
+      }
+
+      return prev;
+    });
+  };
+
+  const formattedAvailability = availability.map((a) => ({
+  days: [a.day], 
+  time: {
+    in_time: Number(a.start_time.split(":")[0]),
+    out_time: Number(a.end_time.split(":")[0]),
+  },
+}));
+
   const onSubmit = async (data: EmployeeFormData) => {
     setIsSubmitting(true);
     try {
@@ -129,12 +193,13 @@ export default function EmployeeOnboarding() {
             role_name: r!.label,
           })),
         },
+        availability: formattedAvailability,
       };
 
       const response = await createEmployee(payload);
-      console.log("Sucess Message ", response);
       toast.success(`Employee ${response.employee_id} onboarded successfully!`);
       form.reset();
+      setAvailability([]);
       setPrimaryRole(null); // Reset primary role select
     } catch (error: any) {
       console.error("Error creating employee:", error);
@@ -497,6 +562,117 @@ export default function EmployeeOnboarding() {
           </Form>
         </CardContent>
       </Card>
+      {isDoctorSelected && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              <CardTitle>Doctor Availability</CardTitle>
+            </div>
+            <CardDescription>
+              Set the working hours for this doctor. Select days and their
+              respective time slots.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              {daysOfWeek.map((day) => {
+                const dayAvailability = availability.find((a) => a.day === day);
+                const isSelected = !!dayAvailability;
+
+                return (
+                  <div
+                    key={day}
+                    className="flex items-start gap-4 p-4 border rounded-lg"
+                  >
+                    <div className="flex items-center space-x-2 min-w-[120px]">
+                      {/* ✅ Styled Radix Checkbox with indicator */}
+                      <Checkbox
+                        id={day}
+                        checked={isSelected}
+                        onCheckedChange={(checked) =>
+                          handleAvailabilityChange(
+                            day,
+                            "toggle",
+                            checked as boolean
+                          )
+                        }
+                        className="w-5 h-5 border rounded flex items-center justify-center"
+                      >
+                        {isSelected && (
+                          <div className="w-3 h-3 bg-primary rounded-sm" />
+                        )}
+                      </Checkbox>
+
+                      <label
+                        htmlFor={day}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {day}
+                      </label>
+                    </div>
+
+                    {isSelected && (
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="time"
+                            value={dayAvailability.start_time}
+                            onChange={(e) =>
+                              handleAvailabilityChange(
+                                day,
+                                "start",
+                                e.target.value
+                              )
+                            }
+                            className="w-[130px]"
+                          />
+                        </div>
+                        <span className="text-muted-foreground">to</span>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <Input
+                            type="time"
+                            value={dayAvailability.end_time}
+                            onChange={(e) =>
+                              handleAvailabilityChange(
+                                day,
+                                "end",
+                                e.target.value
+                              )
+                            }
+                            className="w-[130px]"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {availability.length > 0 && (
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Availability Summary
+                </h4>
+                <div className="space-y-1">
+                  {availability.map((a) => (
+                    <div key={a.day} className="text-sm">
+                      <span className="font-medium">{a.day}:</span>{" "}
+                      <span className="text-muted-foreground">
+                        {a.start_time} - {a.end_time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
