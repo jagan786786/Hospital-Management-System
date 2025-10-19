@@ -71,7 +71,11 @@ interface AppointmentWithDetails extends AppointmentInfo {
   doctorDetail: Employee;
 }
 
-export default function AppointmentManagement() {
+interface AppointmentManagementProps {
+  showOnlyDoctor?: boolean;
+}
+
+export default function AppointmentManagement({ showOnlyDoctor = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>(
@@ -116,9 +120,13 @@ export default function AppointmentManagement() {
         })
       );
 
-      const doctorAppointments = detailedAppointments.filter((appt) => appt.doctorDetail?._id === user?.id)
+      const filteredAppointments = showOnlyDoctor
+        ? detailedAppointments.filter(
+            (appt) => appt.doctorDetail?._id === user?.id
+          )
+        : detailedAppointments;
 
-      setAppointments(doctorAppointments);
+      setAppointments(filteredAppointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       toast({
@@ -133,7 +141,7 @@ export default function AppointmentManagement() {
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [showOnlyDoctor, user?.id]);
 
   const handleUpdateAppointment = async () => {
     if (!editingAppointment || !newDate || !newTime) {
@@ -169,6 +177,22 @@ export default function AppointmentManagement() {
       });
     }
   };
+
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+
+  const todaysCount = appointments.filter((a) => {
+    // Normalize appointment date to YYYY-MM-DD
+    const apptDateStr = new Date(a.visit_date).toISOString().split("T")[0];
+
+    const isToday = apptDateStr === todayStr;
+
+    if (showOnlyDoctor) {
+      return isToday && a.doctorDetail._id === user?.id;
+    }
+
+    return isToday;
+  }).length;
 
   const handleViewHistory = (patientId: string) => {
     navigate(`/patient/${patientId}`);
@@ -333,12 +357,9 @@ export default function AppointmentManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {
-                appointments.filter(
-                  (a) => a.visit_date === new Date().toISOString().split("T")[0]
-                ).length
-              }
+              {todaysCount}
             </div>
+
             <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
         </Card>
