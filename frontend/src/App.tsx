@@ -126,6 +126,15 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/my-appointments"
+                  element={
+                    <ProtectedRoute>
+                      <AppointmentManagement showOnlyDoctor />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
                   path="/medicine-stock"
                   element={
                     <ProtectedRoute>

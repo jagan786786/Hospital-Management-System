@@ -1,8 +1,3 @@
-import { useState, useEffect } from "react"; // ⬅️ added useEffect
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -18,18 +13,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react"; // ⬅️ added useEffect
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 // import Select from "react-select";
+import { createEmployee, getRoles } from "@/api/services/employeService";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UserPlus, Building2, Calendar, Clock } from "lucide-react";
-import { createEmployee } from "@/api/services/employeService";
-import { getRoles } from "@/api/services/employeService"; // ⬅️ NEW service import
+import { Building2, Calendar, Clock, UserPlus } from "lucide-react";
 // Add these from first code:
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button"; // already imported
 import {
   Command,
   CommandEmpty,
@@ -38,10 +34,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Badge } from "@/components/ui/badge";
-import { ChevronDown, X } from "lucide-react";
-import { Button } from "@/components/ui/button"; // already imported
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Checkbox } from "@radix-ui/react-checkbox";
+import { ChevronDown, X } from "lucide-react";
 
 // ✅ Zod schema
 const employeeSchema = z.object({
@@ -57,6 +56,7 @@ const employeeSchema = z.object({
   emergency_contact_name: z.string().optional(),
   emergency_contact_phone: z.string().optional(),
   date_of_joining: z.string().optional(),
+  price: z.number().optional(),
 });
 
 const daysOfWeek = [
@@ -111,6 +111,7 @@ export default function EmployeeOnboarding() {
       phone: "",
       primary_role: "", // new
       secondary_roles: [], // new
+      price: undefined,
       department: "",
       salary: "",
       address: "",
@@ -163,12 +164,12 @@ export default function EmployeeOnboarding() {
   };
 
   const formattedAvailability = availability.map((a) => ({
-  days: [a.day], 
-  time: {
-    in_time: Number(a.start_time.split(":")[0]),
-    out_time: Number(a.end_time.split(":")[0]),
-  },
-}));
+    days: [a.day],
+    time: {
+      in_time: Number(a.start_time.split(":")[0]),
+      out_time: Number(a.end_time.split(":")[0]),
+    },
+  }));
 
   const onSubmit = async (data: EmployeeFormData) => {
     setIsSubmitting(true);
@@ -446,35 +447,68 @@ export default function EmployeeOnboarding() {
                 )}
               />
 
-              {/* Department */}
-              <FormField
-                control={form.control}
-                name="department"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter department" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              <div className="md:col-span-2">
+                <div
+                  className={`grid grid-cols-1 ${
+                    isDoctorSelected ? "md:grid-cols-3" : "md:grid-cols-2"
+                  } gap-6`}
+                >
+                  {/* Department */}
+                  <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter department" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Date of Joining */}
-              <FormField
-                control={form.control}
-                name="date_of_joining"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Joining</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {/* Date of Joining */}
+                  <FormField
+                    control={form.control}
+                    name="date_of_joining"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date of Joining</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* ✅ Appointment Price - show only if Doctor */}
+                  {isDoctorSelected && (
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Appointment Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Enter price"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(e.target.valueAsNumber)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+              </div>
 
               {/* Salary */}
               <FormField

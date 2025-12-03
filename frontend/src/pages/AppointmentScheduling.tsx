@@ -45,6 +45,7 @@ import {
   CalendarIcon,
   Clock,
   FileText,
+  IndianRupee,
   Search,
   Stethoscope,
   User,
@@ -72,6 +73,7 @@ const appointmentSchema = z.object({
   appointment_time: z.string().min(1, "Please select an appointment time"),
   visit_type: z.string().min(1, "Please select a visit type"),
   department: z.string().optional(),
+  price: z.number().optional(),
   notes: z.string().optional(),
 });
 
@@ -99,6 +101,7 @@ interface Doctor {
   last_name: string;
   specialization: string;
   department: string;
+  price: number;
   availability?: DoctorAvailability[];
 }
 
@@ -132,6 +135,7 @@ export default function AppointmentScheduling() {
       appointment_time: "",
       visit_type: "",
       department: "",
+      price: undefined,
       notes: "",
     },
   });
@@ -160,6 +164,14 @@ export default function AppointmentScheduling() {
       }
     }
   }, [preselectedPatientId, patients, form]);
+
+  useEffect(() => {
+    if (form.watch("visit_type") === "Follow-up") {
+      form.setValue("price", undefined);
+    } else {
+      form.setValue("price", selectedDoctor?.price ?? undefined);
+    }
+  }, [form.watch("visit_type"), selectedDoctor]);
 
   // Fetch Patients using API
   const fetchPatients = async () => {
@@ -215,6 +227,7 @@ export default function AppointmentScheduling() {
           last_name: doc.last_name,
           specialization: doc.specialization || "",
           department: doc.department || "",
+          price: doc.price,
           availability: doc.availability || [],
         }));
       setDoctors(doctors);
@@ -551,12 +564,11 @@ export default function AppointmentScheduling() {
                                         setSelectedDoctor(doctor);
                                         field.onChange(doctor.id);
                                         setDoctorOpen(false);
-                                        if (doctor.department) {
-                                          form.setValue(
-                                            "department",
-                                            doctor.department
-                                          );
-                                        }
+                                        form.setValue(
+                                          "department",
+                                          doctor.department
+                                        );
+                                        form.setValue("price", doctor.price);
                                       }}
                                     >
                                       <div className="flex justify-between items-center w-full">
@@ -592,6 +604,7 @@ export default function AppointmentScheduling() {
                   )}
                 />
 
+                <div></div>
                 {/* Visit Date */}
                 <FormField
                   control={form.control}
@@ -691,62 +704,94 @@ export default function AppointmentScheduling() {
                   )}
                 />
 
-                {/* Visit Type */}
-                <FormField
-                  control={form.control}
-                  name="visit_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Visit Type *
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                {/* Visit Type + Department + Appointment Fees */}
+                <div className="grid grid-cols-3 md:col-span-3 gap-6">
+                  {/* Visit Type */}
+                  <FormField
+                    control={form.control}
+                    name="visit_type"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                          Visit Type *
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select visit type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {getAvailableVisitTypes().map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Department */}
+                  <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-primary" />
+                          Department
+                        </FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select visit type" />
-                          </SelectTrigger>
+                          <Input
+                            placeholder="Department"
+                            value={selectedDoctor?.department || ""}
+                            disabled
+                            {...field}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {getAvailableVisitTypes().map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Department */}
-                <FormField
-                  control={form.control}
-                  name="department"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Department
-                      </FormLabel>
+                  {/* Appointment Fees */}
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => {
+                      // Show price only if visit_type is not Follow-up
+                      const showPrice =
+                        selectedDoctor?.price &&
+                        form.watch("visit_type") !== "Follow-up";
 
-                      <FormControl>
-                        <Input
-                          placeholder="Department"
-                          value={selectedDoctor?.department || ""}
-                          disabled
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      return (
+                        <FormItem className="w-full">
+                          <FormLabel className="flex items-center gap-2">
+                            <IndianRupee className="h-4 w-4 text-primary" />
+                            Appointment Fees
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Appointment Fees"
+                              value={showPrice ? selectedDoctor.price : ""}
+                              disabled
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Notes */}
@@ -802,8 +847,14 @@ export default function AppointmentScheduling() {
                   disabled={isSubmitting}
                   variant="medical"
                 >
-                  {isSubmitting ? "Scheduling..." : "Schedule Appointment"}
+                  {isSubmitting
+                    ? "Scheduling..."
+                    : selectedDoctor?.price &&
+                      form.watch("visit_type") !== "Follow-up"
+                    ? `Schedule Appointment (Pay ₹ ${selectedDoctor.price})`
+                    : "Schedule Appointment"}
                 </Button>
+
                 <Button
                   type="button"
                   variant="outline"

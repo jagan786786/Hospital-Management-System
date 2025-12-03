@@ -78,6 +78,7 @@ const employeeSchema = new mongoose.Schema({
     },
   ],
 
+  price:{type:Number,required:true},
   department: { type: String, default: null },
   salary: { type: Number, default: null },
   address: { type: String, default: null },

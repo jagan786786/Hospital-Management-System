@@ -71,7 +71,7 @@ export function MedicalSidebar() {
       defaultOpen: false,
       items: [
         { title: "Patient Queue", url: "/", icon: Users },
-        { title: "My Appointments", url: "/appointments", icon: Calendar },
+        { title: "My Appointments", url: "/my-appointments", icon: Calendar },
       ],
     },
     {
