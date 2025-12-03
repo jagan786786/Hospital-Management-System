@@ -38,6 +38,15 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import {
+  getCustomers,
+  getPatients,
+  createCustomer,
+  createSale,
+  updateStock,
+  getInventory,
+} from "@/api/services/billingService";
+
 // import jsPDF from "jspdf";
 // import "jspdf-autotable";
 
@@ -51,6 +60,7 @@ type Customer = {
 
 type Patient = {
   id: string;
+  patient_id: string;
   first_name: string;
   last_name: string;
   email?: string;
@@ -117,73 +127,144 @@ export default function SellMedicines() {
   }, []);
 
   const fetchCustomers = async () => {
-    const { data, error } = await supabase
-      .from("customers")
-      .select("*")
-      .order("name");
-
-    if (error) {
+    try {
+      const data = await getCustomers();
+      setCustomers(data || []);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to fetch customers",
         variant: "destructive",
       });
-    } else {
-      setCustomers(data || []);
     }
   };
 
   const fetchPatients = async () => {
-    const { data, error } = await supabase
-      .from("patients")
-      .select("*")
-      .order("first_name");
-
-    if (error) {
+    try {
+      const data = await getPatients();
+      setPatients(data || []);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to fetch patients",
         variant: "destructive",
       });
-    } else {
-      setPatients(data || []);
     }
   };
 
+  interface CustomerWrapper {
+    customer: Customer;
+  }
+
   // Helper function to get display name for customer or patient
-  const getDisplayName = (item: CustomerOrPatient): string => {
+  const getDisplayName = (
+    item: CustomerOrPatient | CustomerWrapper
+  ): string => {
+    // Patient case
     if ("isPatient" in item) {
       return `${item.first_name || ""} ${item.last_name || ""}`.trim();
     }
-    return item.name;
+
+    // Customer wrapper case
+    if ("customer" in item) {
+      const customer = (item as CustomerWrapper).customer;
+      return customer.name || "";
+    }
+
+    // Direct Customer case
+    if ("name" in item) {
+      return (item as Customer).name || "";
+    }
+
+    return "";
   };
 
   // Helper function to get email for customer or patient
-  const getEmail = (item: CustomerOrPatient): string => {
-    return item.email || "";
+  const getEmail = (item: CustomerOrPatient | CustomerWrapper): string => {
+    // Patient case
+    if ("isPatient" in item) {
+      return item.email || "";
+    }
+
+    // Customer wrapper case
+    if ("customer" in item) {
+      const customer = (item as CustomerWrapper).customer;
+      return customer.email || "";
+    }
+
+    // Direct Customer case
+    if ("email" in item) {
+      return (item as Customer).email || "";
+    }
+
+    return "";
   };
 
-  // Helper function to get phone for customer or patient
-  const getPhone = (item: CustomerOrPatient): string => {
-    return item.phone || "";
+  const getPhone = (item: CustomerOrPatient | CustomerWrapper): string => {
+    // Patient case
+    if ("isPatient" in item) {
+      return item.phone || "";
+    }
+
+    // Customer wrapper case
+    if ("customer" in item) {
+      const customer = (item as CustomerWrapper).customer;
+      return customer.phone || "";
+    }
+
+    // Direct Customer case
+    if ("phone" in item) {
+      return (item as Customer).phone || "";
+    }
+
+    return "";
   };
 
+  // const fetchMedicines = async () => {
+  //   const { data, error } = await supabase
+  //     .from("medicine_inventory")
+  //     .select("*")
+  //     .eq("active", true)
+  //     .gt("stock_quantity", 0)
+  //     .order("name");
+
+  //   if (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to fetch medicines",
+  //       variant: "destructive",
+  //     });
+  //   } else {
+  //     setMedicines(data || []);
+  //   }
+  // };
+
+  // Fetch Medcines from billing service
   const fetchMedicines = async () => {
-    const { data, error } = await supabase
-      .from("medicine_inventory")
-      .select("*")
-      .eq("active", true)
-      .gt("stock_quantity", 0)
-      .order("name");
+    try {
+      const data = await getInventory();
 
-    if (error) {
+      // Map InventoryItem -> Medicine
+      const mapped: Medicine[] = data
+        .filter((item) => item.quantity_available > 0)
+        .map((item) => ({
+          id: item._id,
+          name: item.brand_name,
+          generic_name: item.generic_name,
+          strength: item.strength,
+          form: item.form,
+          manufacturer: item.manufacturer,
+          stock_quantity: item.quantity_available,
+          price_per_unit: item.selling_price,
+        }));
+
+      setMedicines(mapped);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to fetch medicines",
         variant: "destructive",
       });
-    } else {
-      setMedicines(data || []);
     }
   };
 
@@ -227,6 +308,7 @@ export default function SellMedicines() {
     setShowSearchResults(false);
   };
 
+  // Function to create a new customer
   const handleCreateCustomer = async () => {
     if (!newCustomer.name || !newCustomer.email || !newCustomer.phone) {
       toast({
@@ -237,25 +319,24 @@ export default function SellMedicines() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("customers")
-      .insert([newCustomer])
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create customer",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      const data = await createCustomer(newCustomer);
       setSelectedCustomer(data);
       setCustomers([...customers, data]);
       setNewCustomer({ name: "", email: "", phone: "", address: "" });
       setIsNewCustomer(false);
       setIsCustomerDialogOpen(false);
-      toast({ title: "Success", description: "Customer created successfully" });
+
+      toast({
+        title: "Success",
+        description: "Customer created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create customer",
+        variant: "destructive",
+      });
     }
   };
 
@@ -490,6 +571,122 @@ export default function SellMedicines() {
   //     }
   //   };
 
+  // const handleSubmitSale = async () => {
+  //   console.log("Starting sale submission");
+  //   console.log("Selected customer:", selectedCustomer);
+  //   console.log("Cart:", cart);
+
+  //   if (!selectedCustomer || cart.length === 0) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Please select customer and add medicines",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+
+  //   try {
+  //     let customerId = selectedCustomer.id;
+
+  //     // If a patient is selected, create a temporary customer record
+  //     if ("isPatient" in selectedCustomer) {
+  //       const patientData = selectedCustomer;
+  //       const { data: newCustomer, error: customerError } = await supabase
+  //         .from("customers")
+  //         .insert([
+  //           {
+  //             name: `${patientData.first_name || ""} ${
+  //               patientData.last_name || ""
+  //             }`.trim(),
+  //             email: patientData.email || "",
+  //             phone: patientData.phone || "",
+  //             address: patientData.address || "",
+  //           },
+  //         ])
+  //         .select()
+  //         .single();
+
+  //       if (customerError) throw customerError;
+  //       customerId = newCustomer.id;
+  //     }
+
+  //     // Create sale record
+  //     const { data: saleData, error: saleError } = await supabase
+  //       .from("sales")
+  //       .insert([
+  //         {
+  //           customer_id: customerId,
+  //           subtotal: calculateSubtotal(),
+  //           gst_enabled: gstEnabled,
+  //           gst_amount: calculateGST(),
+  //           coupon_code: appliedCoupon,
+  //           discount_amount: calculateDiscount(),
+  //           total_amount: calculateTotal(),
+  //         },
+  //       ])
+  //       .select()
+  //       .single();
+
+  //     if (saleError) throw saleError;
+
+  //     // Create sale items
+  //     const saleItems = cart.map((item) => ({
+  //       sale_id: saleData.id,
+  //       medicine_id: item.medicine.id,
+  //       quantity: item.quantity,
+  //       unit_price: item.medicine.price_per_unit,
+  //       total_price: item.total,
+  //     }));
+
+  //     const { error: itemsError } = await supabase
+  //       .from("sale_items")
+  //       .insert(saleItems);
+
+  //     if (itemsError) throw itemsError;
+
+  //     // Update inventory
+  //     for (const item of cart) {
+  //       const { error: inventoryError } = await supabase
+  //         .from("medicine_inventory")
+  //         .update({
+  //           stock_quantity: item.medicine.stock_quantity - item.quantity,
+  //         })
+  //         .eq("id", item.medicine.id);
+
+  //       if (inventoryError) throw inventoryError;
+  //     }
+
+  //     // Generate PDF using template
+  //     console.log("Sale data before PDF generation:", saleData);
+  //     //   await downloadTemplatePDF(saleData.id);
+
+  //     // Reset form
+  //     setCart([]);
+  //     setSelectedCustomer(null);
+  //     setGstEnabled(false);
+  //     setCouponCode("");
+  //     setAppliedCoupon(null);
+
+  //     // Refresh medicines to show updated stock
+  //     fetchMedicines();
+
+  //     toast({ title: "Success", description: "Sale completed successfully!" });
+  //   } catch (error) {
+  //     console.error("Sale error:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: `Failed to process sale: ${
+  //         error instanceof Error ? error.message : "Unknown error"
+  //       }`,
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleSubmitSale = async () => {
     console.log("Starting sale submission");
     console.log("Selected customer:", selectedCustomer);
@@ -508,90 +705,73 @@ export default function SellMedicines() {
 
     try {
       let customerId = selectedCustomer.id;
+      let customerPayload: any = null;
 
-      // If a patient is selected, create a temporary customer record
+      // ✅ If selectedCustomer is a patient, DO NOT create customer
       if ("isPatient" in selectedCustomer) {
         const patientData = selectedCustomer;
-        const { data: newCustomer, error: customerError } = await supabase
-          .from("customers")
-          .insert([
-            {
-              name: `${patientData.first_name || ""} ${
-                patientData.last_name || ""
-              }`.trim(),
-              email: patientData.email || "",
-              phone: patientData.phone || "",
-              address: patientData.address || "",
-            },
-          ])
-          .select()
-          .single();
+        customerId = patientData.patient_id;
 
-        if (customerError) throw customerError;
-        customerId = newCustomer.id;
+        // Use patient data directly
+        customerPayload = {
+          name: `${patientData.first_name || ""} ${
+            patientData.last_name || ""
+          }`.trim(),
+          email: patientData.email || "",
+          phone: patientData.phone || "",
+          address: patientData.address || "",
+          isPatient: true,
+        };
+      } else {
+        // For regular customers
+        customerPayload = selectedCustomer;
       }
 
-      // Create sale record
-      const { data: saleData, error: saleError } = await supabase
-        .from("sales")
-        .insert([
-          {
-            customer_id: customerId,
-            subtotal: calculateSubtotal(),
-            gst_enabled: gstEnabled,
-            gst_amount: calculateGST(),
-            coupon_code: appliedCoupon,
-            discount_amount: calculateDiscount(),
-            total_amount: calculateTotal(),
-          },
-        ])
-        .select()
-        .single();
+      // ✅ Create sale payload (no customer creation for patients)
+      const salePayload = {
+        customer_id: customerId,
+        customer: customerPayload, // Include for reference if needed
+        subtotal: calculateSubtotal(),
+        gst_enabled: gstEnabled,
+        gst_amount: calculateGST(),
+        coupon_code: appliedCoupon,
+        discount_amount: calculateDiscount(),
+        total_amount: calculateTotal(),
+        sale_items: cart.map((item) => ({
+          medicine_id: item.medicine.id,
+          name: item.medicine.name,
+          strength: item.medicine.strength,
+          quantity: item.quantity,
+          unit_price: item.medicine.price_per_unit,
+          total_price: item.total,
+        })),
+      };
 
-      if (saleError) throw saleError;
+      const saleData = await createSale(salePayload);
 
-      // Create sale items
-      const saleItems = cart.map((item) => ({
-        sale_id: saleData.id,
-        medicine_id: item.medicine.id,
-        quantity: item.quantity,
-        unit_price: item.medicine.price_per_unit,
-        total_price: item.total,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("sale_items")
-        .insert(saleItems);
-
-      if (itemsError) throw itemsError;
-
-      // Update inventory
+      // ✅ Update stock
       for (const item of cart) {
-        const { error: inventoryError } = await supabase
-          .from("medicine_inventory")
-          .update({
-            stock_quantity: item.medicine.stock_quantity - item.quantity,
-          })
-          .eq("id", item.medicine.id);
-
-        if (inventoryError) throw inventoryError;
+        await updateStock(
+          item.medicine.id,
+          item.medicine.stock_quantity - item.quantity
+        );
       }
 
-      // Generate PDF using template
       console.log("Sale data before PDF generation:", saleData);
-      //   await downloadTemplatePDF(saleData.id);
+      // await downloadTemplatePDF(saleData._id);
 
-      // Reset form
+      // ✅ Reset UI
       setCart([]);
       setSelectedCustomer(null);
       setGstEnabled(false);
       setCouponCode("");
       setAppliedCoupon(null);
-
-      // Refresh medicines to show updated stock
       fetchMedicines();
 
-      toast({ title: "Success", description: "Sale completed successfully!" });
+      toast({
+        title: "Success",
+        description: "Sale completed successfully!",
+      });
     } catch (error) {
       console.error("Sale error:", error);
       toast({

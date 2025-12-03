@@ -1,24 +1,41 @@
 const Patient = require("../models/patient.model");
 
+const generateId = () => {
+  const timestamp = Date.now(); // ✅ define it
+  const timestampPart = timestamp.toString(36).slice(-2).toUpperCase(); // last 2 chars
+  const randomPart = Math.random().toString(36).substring(2, 4).toUpperCase(); // 2 random chars
+  return `PAT${timestampPart}${randomPart}`; // total length = 7
+};
 exports.regsiterPatient = async (req, res) => {
   try {
-    const { first_name, last_name , phone } = req.body;
+    const { first_name, last_name, phone } = req.body;
 
     if (!first_name || !last_name) {
-      return res.status(400).json({ message: "First and last name are required" });
+      return res
+        .status(400)
+        .json({ message: "First and last name are required" });
     }
 
     // Check if phone OR email already exists
-    const existingPatient = await Patient.findOne({$or: [{ phone }]});
+    const existingPatient = await Patient.findOne({ $or: [{ phone }] });
 
     if (existingPatient) {
-      return res.status(400).json({ message: "Patient already registered with this phone number" });
+      return res
+        .status(400)
+        .json({ message: "Patient already registered with this phone number" });
     }
+    // ✅ Inject patientid here without changing the rest of the code
+    req.body.patient_id = generateId();
 
     const newPatient = await Patient.create(req.body);
-    res.status(201).json({ message: "Patient registered successfully!", patient: newPatient });
+    res.status(201).json({
+      message: "Patient registered successfully!",
+      patient: newPatient,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Failed to register patient", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to register patient", error: error.message });
   }
 };
 
@@ -27,7 +44,9 @@ exports.getPatients = async (req, res) => {
     const patients = await Patient.find().sort({ createdAt: -1 });
     res.json(patients);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch patients", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch patients", error: error.message });
   }
 };
 
@@ -44,12 +63,17 @@ exports.updatePatient = async (req, res) => {
       return res.status(404).json({ message: "Patient not found" });
     }
 
-    res.json({ message: "Patient updated successfully!", patient: updatedPatient });
+    res.json({
+      message: "Patient updated successfully!",
+      patient: updatedPatient,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Failed to update patient", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update patient", error: error.message });
   }
 };
- 
+
 // ✅ Fetch single patient by ID
 exports.getPatientById = async (req, res) => {
   try {

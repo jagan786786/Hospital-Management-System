@@ -49,8 +49,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getCustomers,
+  getPatients,
+  createCustomer,
+  createSale,
+  getSales,
+  getInventory,
+} from "@/api/services/billingService";
 
 type Sale = {
+  _id: string;
   id: string;
   sale_date: string;
   customer_id: string;
@@ -60,7 +69,7 @@ type Sale = {
   status: string;
   coupon_code?: string;
   discount_amount?: number;
-  customers?: {
+  customer?: {
     name: string;
     email: string;
     phone: string;
@@ -70,16 +79,15 @@ type Sale = {
     quantity: number;
     unit_price: number;
     total_price: number;
-    medicine_inventory?: {
-      name: string;
-      strength?: string;
-    };
+    name: string;
+    strength?: string;
   }>;
   patient?: {
     id: string;
     first_name: string;
     last_name: string;
   };
+  created_at: string;
 };
 
 export default function BillingTab() {
@@ -132,55 +140,103 @@ export default function BillingTab() {
     };
   }, [patients]);
 
+  // const fetchPatients = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("patients")
+  //       .select("id, first_name, last_name, email, phone");
+
+  //     if (error) throw error;
+  //     setPatients(data || []);
+  //   } catch (error) {
+  //     console.error("Error fetching patients:", error);
+  //   }
+  // };
+
   const fetchPatients = async () => {
     try {
-      const { data, error } = await supabase
-        .from("patients")
-        .select("id, first_name, last_name, email, phone");
-
-      if (error) throw error;
+      setLoading(true);
+      const data = await getPatients(); // from billingService
       setPatients(data || []);
     } catch (error) {
       console.error("Error fetching patients:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch patients",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  // const fetchSales = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("sales")
+  //       .select(
+  //         `
+  //         *,
+  //         customers (
+  //           name,
+  //           email,
+  //           phone
+  //         ),
+  //         sale_items (
+  //           id,
+  //           quantity,
+  //           unit_price,
+  //           total_price,
+  //           medicine_inventory (
+  //             name,
+  //             strength
+  //           )
+  //         )
+  //       `
+  //       )
+  //       .order("sale_date", { ascending: false });
+
+  //     if (error) throw error;
+
+  //     // Match customers with patients
+  //     const salesWithPatients = (data || []).map((sale) => {
+  //       const matchedPatient = patients.find(
+  //         (patient) =>
+  //           patient.email === sale.customers?.email ||
+  //           patient.phone === sale.customers?.phone
+  //       );
+
+  //       return {
+  //         ...sale,
+  //         patient: matchedPatient,
+  //       };
+  //     });
+
+  //     setSales(salesWithPatients);
+  //   } catch (error) {
+  //     console.error("Error fetching sales:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to fetch billing history",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchSales = async () => {
     try {
-      const { data, error } = await supabase
-        .from("sales")
-        .select(
-          `
-          *,
-          customers (
-            name,
-            email,
-            phone
-          ),
-          sale_items (
-            id,
-            quantity,
-            unit_price,
-            total_price,
-            medicine_inventory (
-              name,
-              strength
-            )
-          )
-        `
-        )
-        .order("sale_date", { ascending: false });
+      setLoading(true);
+      const data = await getSales(); // from billingService
 
-      if (error) throw error;
-
-      // Match customers with patients
-      const salesWithPatients = (data || []).map((sale) => {
+      // Optional: match sales with patients based on email or phone (like before)
+      const salesWithPatients = (data || []).map((sale: any) => {
         const matchedPatient = patients.find(
           (patient) =>
             patient.email === sale.customers?.email ||
             patient.phone === sale.customers?.phone
         );
-
         return {
           ...sale,
           patient: matchedPatient,
@@ -220,16 +276,19 @@ export default function BillingTab() {
     // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
+      console.log("Filter on Sales", sales[0].customer_id, lowerSearch);
       filtered = filtered.filter(
         (sale) =>
-          sale.id.toLowerCase().includes(lowerSearch) ||
+          sale._id.toLowerCase().includes(lowerSearch.split("-")[1]) ||
           sale.customer_id.toLowerCase().includes(lowerSearch) ||
-          sale.customers?.name.toLowerCase().includes(lowerSearch) ||
-          sale.customers?.email?.toLowerCase().includes(lowerSearch) ||
-          sale.customers?.phone?.toLowerCase().includes(lowerSearch) ||
+          sale.customer?.name.toLowerCase().includes(lowerSearch) ||
+          sale.customer?.email?.toLowerCase().includes(lowerSearch) ||
+          sale.customer?.phone?.toLowerCase().includes(lowerSearch) ||
           formatDate(sale.sale_date).toLowerCase().includes(lowerSearch)
       );
     }
+
+    console.log("After Search Filter", filtered);
 
     // Apply column filters
     if (filters.billingId) {
@@ -242,7 +301,7 @@ export default function BillingTab() {
 
     if (filters.customerName) {
       filtered = filtered.filter((sale) =>
-        sale.customers?.name
+        sale.customer?.name
           .toLowerCase()
           .includes(filters.customerName.toLowerCase())
       );
@@ -250,7 +309,7 @@ export default function BillingTab() {
 
     if (filters.email) {
       filtered = filtered.filter((sale) =>
-        sale.customers?.email
+        sale.customer?.email
           ?.toLowerCase()
           .includes(filters.email.toLowerCase())
       );
@@ -258,7 +317,7 @@ export default function BillingTab() {
 
     if (filters.phone) {
       filtered = filtered.filter((sale) =>
-        sale.customers?.phone?.includes(filters.phone)
+        sale.customer?.phone?.includes(filters.phone)
       );
     }
 
@@ -328,6 +387,7 @@ export default function BillingTab() {
   });
 
   const pagination = usePagination(sortedData, pageSize);
+  console.log("Paginated Data:", pagination.paginatedData);
 
   const toggleRow = (saleId: string) => {
     setExpandedRows((prev) => {
@@ -713,7 +773,7 @@ export default function BillingTab() {
                             </Button>
                           </TableCell>
                           <TableCell className="font-medium">
-                            {formatBillingId(sale.id)}
+                            {formatBillingId(sale._id)}
                           </TableCell>
                           <TableCell>
                             {sale.patient ? (
@@ -742,14 +802,12 @@ export default function BillingTab() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{sale.customers?.name || "N/A"}</TableCell>
+                          <TableCell>{sale.customer?.name || "N/A"}</TableCell>
                           <TableCell className="text-sm">
-                            {sale.customers?.email || "N/A"}
+                            {sale.customer?.email || "N/A"}
                           </TableCell>
-                          <TableCell>
-                            {sale.customers?.phone || "N/A"}
-                          </TableCell>
-                          <TableCell>{formatDate(sale.sale_date)}</TableCell>
+                          <TableCell>{sale.customer?.phone || "N/A"}</TableCell>
+                          <TableCell>{formatDate(sale.created_at)}</TableCell>
                           <TableCell className="text-right">
                             ₹{sale.gst_amount.toFixed(2)}
                           </TableCell>
@@ -808,17 +866,11 @@ export default function BillingTab() {
                                           </span>
                                           <div className="flex-1">
                                             <div className="font-medium">
-                                              {item.medicine_inventory?.name ||
-                                                "Unknown Medicine"}
+                                              {item?.name || "Unknown Medicine"}
                                             </div>
-                                            {item.medicine_inventory
-                                              ?.strength && (
+                                            {item?.strength && (
                                               <div className="text-sm text-muted-foreground">
-                                                Strength:{" "}
-                                                {
-                                                  item.medicine_inventory
-                                                    .strength
-                                                }
+                                                Strength: {item.strength}
                                               </div>
                                             )}
                                           </div>

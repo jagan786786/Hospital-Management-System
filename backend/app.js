@@ -17,6 +17,8 @@ const roleRoutes = require("./routes/role.routes");
 const screenRoutes = require("./routes/screen.routes");
 const emailRoutes = require("./routes/email.routes");
 const supplierRoutes = require("./routes/supplier.routes");
+const customerRoutes = require("./routes/customer.routes");
+const saleRoutes = require("./routes/sale.routes");
 
 // Swagger docs
 const swaggerUi = require("swagger-ui-express");
@@ -50,5 +52,7 @@ app.use("/api/screen", screenRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/supplier", supplierRoutes);
+app.use("/api/customer", customerRoutes);
+app.use("/api/sale", saleRoutes);
 
 module.exports = app;

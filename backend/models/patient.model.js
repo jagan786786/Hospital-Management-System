@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 
 const patientSchema = new mongoose.Schema(
   {
+    patient_id: { type: String, required: true, unique: true }, // generated ID
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
     phone: { type: String, default: null },
@@ -14,9 +15,9 @@ const patientSchema = new mongoose.Schema(
     medical_history: { type: String, default: null },
     password: { type: String, default: "patient123", required: true },
   },
-  { 
+  {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-    collection: "patients"   // 👈 force Mongoose to use your existing collection
+    collection: "patients", // 👈 force Mongoose to use your existing collection
   }
 );
 
@@ -29,12 +30,11 @@ patientSchema.pre("save", async function (next) {
     next();
   } catch (err) {
     next(err);
-  } 
+  }
 });
 
 patientSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
-
 
 module.exports = mongoose.model("Patients", patientSchema);
