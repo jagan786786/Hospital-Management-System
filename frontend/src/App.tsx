@@ -31,6 +31,7 @@ import NotAuthenticated from "./components/NotAuthenticated";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ResetPasswordPage from "./pages/ResetPassword";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const queryClient = new QueryClient();
 
@@ -38,30 +39,33 @@ const queryClient = new QueryClient();
 const Layout = ({ children }) => {
   const location = useLocation();
 
-  // Pages where we DON'T want sidebar & header
   const noSidebarRoutes = ["/login", "/unauthorized", "/reset-password/:id"];
-
   const hideSidebar = noSidebarRoutes.some((route) =>
     matchPath({ path: route, end: true }, location.pathname)
   );
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="flex min-h-screen w-full bg-background">
+
+      {/* SIDEBAR (fixed width, left side) */}
       {!hideSidebar && <MedicalSidebar />}
 
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* CONTENT AREA (header + page content) */}
+      <div className="flex flex-col flex-1 min-w-0">
+
+        {/* HEADER sits ONLY over content, not sidebar */}
         {!hideSidebar && (
-          <header className="sticky top-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-full items-center px-4">
-              <SidebarTrigger className="mr-4" />
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold">Medical Dashboard</h2>
-              </div>
-            </div>
+          <header className="h-16 border-b bg-background/95 backdrop-blur flex items-center px-10 sticky top-0">
+            <SidebarTrigger className="mr-4" />
+            <h2 className="text-lg font-semibold">Medical Dashboard</h2>
           </header>
         )}
 
-        <main className="flex-1 overflow-auto">{children}</main>
+        {/* CHILD PAGE CONTENT */}
+        <main className="flex-1 overflow-auto p-4">
+          {children}
+        </main>
+
       </div>
     </div>
   );
@@ -84,7 +88,7 @@ const App = () => (
                   element={<ResetPasswordPage />}
                 />
                 <Route
-                  path="/"
+                  path="/patient-list"
                   element={
                     <ProtectedRoute>
                       <PatientList />
@@ -101,7 +105,7 @@ const App = () => (
                 />
                 <Route path="/prescription" element={<PrescriptionPage />} />
                 <Route
-                  path="/patient-onboarding"
+                  path="/"
                   element={
                     <ProtectedRoute>
                       <PatientOnboarding />

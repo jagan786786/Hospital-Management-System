@@ -474,7 +474,15 @@ export default function AppointmentScheduling() {
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-[400px] p-0">
-                          <Command>
+                          <Command
+                            filter={(value, search) => {
+                              return value
+                                .toLowerCase()
+                                .includes(search.toLowerCase())
+                                ? 1
+                                : 0;
+                            }}
+                          >
                             <CommandInput placeholder="Search patients..." />
                             <CommandList>
                               <CommandEmpty>No patients found.</CommandEmpty>
@@ -482,7 +490,7 @@ export default function AppointmentScheduling() {
                                 {patients.map((patient) => (
                                   <CommandItem
                                     key={patient.id}
-                                    value={`${patient.first_name} ${patient.last_name}`}
+                                    value={`${patient.first_name} ${patient.last_name} ${patient.phone}`}
                                     onSelect={() => {
                                       setSelectedPatient(patient);
                                       field.onChange(patient.id);

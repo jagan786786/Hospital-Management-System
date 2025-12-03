@@ -68,7 +68,7 @@ export default function LoginForm() {
       toast.success(`Welcome back, ${response.name}!`);
 
       if (response.type === "patient") {
-        navigate("/patient-onboarding");
+        navigate("/");
       } else {
         navigate("/employee-onboarding");
       }

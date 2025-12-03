@@ -54,56 +54,56 @@ export function MedicalSidebar() {
       items: [
         {
           title: "Patient Onboarding",
-          url: "/patient-onboarding",
+          url: "/",
           icon: Users,
         },
         { title: "Patient Records", url: "/patient-records", icon: FileText },
-        {
-          title: "Schedule Appointment",
-          url: "/appointment-scheduling",
-          icon: Calendar,
-        },
+        // {
+        //   title: "Schedule Appointment",
+        //   url: "/appointment-scheduling",
+        //   icon: Calendar,
+        // },
         { title: "Appointments", url: "/appointments", icon: Calendar },
       ],
     },
-    {
-      title: "Doctor Management",
-      defaultOpen: false,
-      items: [
-        { title: "Patient Queue", url: "/", icon: Users },
-        { title: "My Appointments", url: "/my-appointments", icon: Calendar },
-      ],
-    },
-    {
-      title: "Inventory Management",
-      defaultOpen: false,
-      items: [
-        { title: "Medicine Stock", url: "/medicine-stock", icon: Activity },
-        { title: "Billing", url: "/billing", icon: FileText },
-        { title: "Stock Reports", url: "/stock-reports", icon: FileText },
-      ],
-    },
-    {
-      title: "HR Management",
-      defaultOpen: false,
-      items: [
-        {
-          title: "Employee Onboarding",
-          url: "/employee-onboarding",
-          icon: Users,
-        },
-        { title: "View Employees", url: "/employees", icon: Users },
-      ],
-    },
-    {
-      title: "Administration",
-      defaultOpen: false,
-      items: [
-        { title: "Screen Access", url: "/screens", icon: Shield },
-        { title: "User Roles", url: "/user-roles", icon: Users },
-        { title: "System Settings", url: "/settings", icon: Settings },
-      ],
-    },
+    // {
+    //   title: "Doctor Management",
+    //   defaultOpen: false,
+    //   items: [
+    //     { title: "Patient Queue", url: "/", icon: Users },
+    //     { title: "My Appointments", url: "/my-appointments", icon: Calendar },
+    //   ],
+    // },
+    // {
+    //   title: "Inventory Management",
+    //   defaultOpen: false,
+    //   items: [
+    //     { title: "Medicine Stock", url: "/medicine-stock", icon: Activity },
+    //     { title: "Billing", url: "/billing", icon: FileText },
+    //     { title: "Stock Reports", url: "/stock-reports", icon: FileText },
+    //   ],
+    // },
+    // {
+    //   title: "HR Management",
+    //   defaultOpen: false,
+    //   items: [
+    //     {
+    //       title: "Employee Onboarding",
+    //       url: "/employee-onboarding",
+    //       icon: Users,
+    //     },
+    //     { title: "View Employees", url: "/employees", icon: Users },
+    //   ],
+    // },
+    // {
+    //   title: "Administration",
+    //   defaultOpen: false,
+    //   items: [
+    //     { title: "Screen Access", url: "/screens", icon: Shield },
+    //     { title: "User Roles", url: "/user-roles", icon: Users },
+    //     { title: "System Settings", url: "/settings", icon: Settings },
+    //   ],
+    // },
   ];
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(

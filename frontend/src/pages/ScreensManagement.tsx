@@ -32,8 +32,8 @@ type Role = 'admin' | 'doctor' | 'nurse' | 'receptionist' | 'pharmacist' | 'hr';
 
 const availableScreens: ScreenAccess[] = [
   // Patient Management
-  { id: "patient-queue", name: "Patient Queue", description: "View and manage patient queue", category: "Patient Management", path: "/", icon: Users, roles: ["doctor", "nurse"] },
-  { id: "patient-onboarding", name: "Patient Onboarding", description: "Register new patients", category: "Patient Management", path: "/patient-onboarding", icon: Users, roles: ["receptionist", "nurse"] },
+  { id: "patient-queue", name: "Patient Queue", description: "View and manage patient queue", category: "Patient Management", path: "/patient-list", icon: Users, roles: ["doctor", "nurse"] },
+  { id: "patient-onboarding", name: "Patient Onboarding", description: "Register new patients", category: "Patient Management", path: "/", icon: Users, roles: ["receptionist", "nurse"] },
   { id: "patient-records", name: "Patient Records", description: "Access patient medical records", category: "Patient Management", path: "/patient-records", icon: FileText, roles: ["doctor", "nurse"] },
   { id: "appointment-scheduling", name: "Schedule Appointment", description: "Book new appointments", category: "Patient Management", path: "/appointment-scheduling", icon: Calendar, roles: ["receptionist"] },
   { id: "appointments", name: "Appointments", description: "Manage appointments", category: "Patient Management", path: "/appointments", icon: Calendar, roles: ["doctor", "nurse", "receptionist"] },
