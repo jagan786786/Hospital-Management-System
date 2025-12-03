@@ -327,7 +327,7 @@ export default function PatientRecords() {
                           {new Date(patient.created_at).toLocaleDateString()}
                         </td>
                         <td className="p-3 flex gap-2">
-                          <PatientHistoryDialog patient={patient} />
+                          {/* <PatientHistoryDialog patient={patient} /> */}
                           <PatientEditDialog
                             patient={patient}
                             onPatientUpdate={fetchData}

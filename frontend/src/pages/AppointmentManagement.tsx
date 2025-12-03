@@ -36,6 +36,7 @@ import {
   Eye,
   FileText,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -221,6 +222,29 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
     }
   };
 
+  const handleCompleteAppointment = async (appointmentId: string) => {
+    try {
+      // Update the appointment status to "cancelled"
+      await updateAppointment(appointmentId, { status: "Completed" });
+
+      toast({
+        title: "Appointment Completed",
+        description: "The appointment has been successfully completed.",
+        variant: "default",
+      });
+
+      // Refresh appointments to reflect the change
+      fetchAppointments();
+    } catch (error) {
+      console.error("Failed to complete appointment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete appointment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openEditDialog = (appointment: AppointmentWithDetails) => {
     setEditingAppointment(appointment);
     setNewDate(appointment.visit_date);
@@ -356,9 +380,7 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {todaysCount}
-            </div>
+            <div className="text-2xl font-bold text-primary">{todaysCount}</div>
 
             <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
@@ -509,7 +531,7 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
-                          {/* View History - Available for all appointments */}
+                          {/* View History - Available for all appointments
                           <Button
                             size="sm"
                             variant="outline"
@@ -520,10 +542,10 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
                             title="View Patient History"
                           >
                             <Eye className="h-3 w-3" />
-                          </Button>
+                          </Button> */}
 
                           {/* Edit Prescription - Available for completed appointments */}
-                          {appointment.status === "Completed" && (
+                          {/* {appointment.status === "Completed" && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -535,9 +557,9 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
                             >
                               <FileText className="h-3 w-3" />
                             </Button>
-                          )}
+                          )} */}
 
-                          {/* Edit and Cancel - Only for scheduled appointments */}
+                          {/* Edit and Cancel - Only for scheduled appointments
                           {appointment.status === "Scheduled" && (
                             <>
                               <Dialog>
@@ -650,15 +672,272 @@ export default function AppointmentManagement({ showOnlyDoctor = false }) {
                                 </AlertDialogContent>
                               </AlertDialog>
                             </>
+                          )} */}
+
+                          {/* Edit and Cancel - Only for scheduled appointments */}
+                          {appointment.status === "Scheduled" && (
+                            <>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => openEditDialog(appointment)}
+                                    title="Edit Appointment"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Edit Appointment</DialogTitle>
+                                    <DialogDescription>
+                                      Update the appointment date and time for{" "}
+                                      {appointment.patientDetail.first_name}{" "}
+                                      {appointment.patientDetail.last_name}
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                      <Label
+                                        htmlFor="date"
+                                        className="text-right"
+                                      >
+                                        Date
+                                      </Label>
+                                      <Input
+                                        id="date"
+                                        type="date"
+                                        value={newDate}
+                                        onChange={(e) =>
+                                          setNewDate(e.target.value)
+                                        }
+                                        className="col-span-3"
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                      <Label
+                                        htmlFor="time"
+                                        className="text-right"
+                                      >
+                                        Time
+                                      </Label>
+                                      <Input
+                                        id="time"
+                                        type="time"
+                                        value={newTime}
+                                        onChange={(e) =>
+                                          setNewTime(e.target.value)
+                                        }
+                                        className="col-span-3"
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <Button
+                                      type="submit"
+                                      onClick={handleUpdateAppointment}
+                                    >
+                                      Update Appointment
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                    title="Complete Appointment"
+                                  >
+                                    <ArrowRight
+                                      color="green"
+                                      className="h-3 w-3"
+                                    />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Complete Appointment
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to complete the
+                                      appointment for{" "}
+                                      {appointment.patientDetail.first_name}{" "}
+                                      {appointment.patientDetail.last_name} on{" "}
+                                      {formatDate(appointment.visit_date)} at{" "}
+                                      {formatTime(appointment.visit_time)}? This
+                                      action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep In Progress
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleCompleteAppointment(
+                                          appointment._id
+                                        )
+                                      }
+                                      className="bg-green-600 text-white hover:bg-green-700"
+                                    >
+                                      Complete Appointment
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    title="Cancel Appointment"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Cancel Appointment
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel the
+                                      appointment for{" "}
+                                      {appointment.patientDetail.first_name}{" "}
+                                      {appointment.patientDetail.last_name} on{" "}
+                                      {formatDate(appointment.visit_date)} at{" "}
+                                      {formatTime(appointment.visit_time)}? This
+                                      action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep Appointment
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleCancelAppointment(appointment._id)
+                                      }
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Cancel Appointment
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          )}
+
+                          {appointment.status === "In-Progress" && (
+                            <>
+                              {/* Complete Appointment Button */}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                    title="Complete Appointment"
+                                  >
+                                    <ArrowRight
+                                      color="green"
+                                      className="h-3 w-3"
+                                    />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Complete Appointment
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to complete the
+                                      appointment for{" "}
+                                      {appointment.patientDetail.first_name}{" "}
+                                      {appointment.patientDetail.last_name} on{" "}
+                                      {formatDate(appointment.visit_date)} at{" "}
+                                      {formatTime(appointment.visit_time)}? This
+                                      action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep In Progress
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleCompleteAppointment(
+                                          appointment._id
+                                        )
+                                      }
+                                      className="bg-green-600 text-white hover:bg-green-700"
+                                    >
+                                      Complete Appointment
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+
+                              {/* Cancel Appointment Button */}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    title="Cancel Appointment"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Cancel Appointment
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel the
+                                      appointment for{" "}
+                                      {appointment.patientDetail.first_name}{" "}
+                                      {appointment.patientDetail.last_name} on{" "}
+                                      {formatDate(appointment.visit_date)} at{" "}
+                                      {formatTime(appointment.visit_time)}? This
+                                      action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep Appointment
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleCancelAppointment(appointment._id)
+                                      }
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Cancel Appointment
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
                           )}
 
                           {/* Status indicator for cancelled appointments */}
-                          {appointment.status === "Cancelled" && (
+                          {/* {appointment.status === "Cancelled" && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <AlertCircle className="h-3 w-3" />
                               Cancelled
                             </div>
-                          )}
+                          )} */}
                         </div>
                       </td>
                     </tr>
