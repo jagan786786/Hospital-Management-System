@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -8,21 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -39,59 +23,45 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
-  CalendarIcon,
-  Search,
-  Clock,
-  User,
-  Stethoscope,
-  Building2,
-  FileText,
-} from "lucide-react";
-import { format } from "date-fns";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import {
+  Building2,
+  CalendarIcon,
+  Clock,
+  FileText,
+  Search,
+  Stethoscope,
+  User,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { z } from "zod";
 // import { supabase } from "@/integrations/supabase/client";
+import {
+  createAppointment,
+  getAppointments,
+} from "@/api/services/appointmentService";
+import { getEmployees } from "@/api/services/employeService";
+import { getPatients } from "@/api/services/patientService";
 import { toast } from "@/hooks/use-toast";
 import { cache } from "@/lib/cache";
-import { getPatients } from "@/api/services/patientService";
-import { getEmployees } from "@/api/services/employeService";
-import {
-  getAppointments,
-  createAppointment,
-} from "@/api/services/appointmentService";
-
-// Indian Medical Departments
-const INDIAN_DEPARTMENTS = [
-  "General Medicine",
-  "Pediatrics",
-  "Obstetrics & Gynecology",
-  "Surgery",
-  "Orthopedics",
-  "Cardiology",
-  "Neurology",
-  "Psychiatry",
-  "Dermatology",
-  "ENT",
-  "Ophthalmology",
-  "Anesthesiology",
-  "Radiology",
-  "Pathology",
-  "Emergency Medicine",
-  "Pulmonology",
-  "Gastroenterology",
-  "Nephrology",
-  "Endocrinology",
-  "Rheumatology",
-  "Oncology",
-  "Urology",
-  "Plastic Surgery",
-  "Neurosurgery",
-  "Cardiac Surgery",
-];
 
 const appointmentSchema = z.object({
   patient_id: z.string().min(1, "Please select a patient"),
@@ -115,12 +85,21 @@ interface Patient {
   created_at: string;
 }
 
+interface DoctorAvailability {
+  days: string[];
+  time: {
+    in_time: number;
+    out_time: number;
+  };
+}
+
 interface Doctor {
   id: string;
   first_name: string;
   last_name: string;
   specialization: string;
   department: string;
+  availability?: DoctorAvailability[];
 }
 
 interface Appointment {
@@ -143,6 +122,7 @@ export default function AppointmentScheduling() {
   const [lastVisitDate, setLastVisitDate] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdhoc, setIsAdhoc] = useState(false);
 
   const form = useForm<AppointmentForm>({
     resolver: zodResolver(appointmentSchema),
@@ -170,13 +150,8 @@ export default function AppointmentScheduling() {
 
   useEffect(() => {
     if (preselectedPatientId && patients.length > 0) {
-      console.log(
-        "AppointmentScheduling: Setting preselected patient:",
-        preselectedPatientId
-      );
       const patient = patients.find((p) => p.id === preselectedPatientId);
       if (patient) {
-        console.log("AppointmentScheduling: Found patient:", patient);
         setSelectedPatient(patient);
         form.setValue("patient_id", patient.id);
         checkLastVisit(patient.id);
@@ -240,8 +215,8 @@ export default function AppointmentScheduling() {
           last_name: doc.last_name,
           specialization: doc.specialization || "",
           department: doc.department || "",
+          availability: doc.availability || [],
         }));
-      console.log("Doctor deta;s", doctors);
       setDoctors(doctors);
       cache.set("doctors", doctors, 600000);
     } catch (error) {
@@ -266,10 +241,6 @@ export default function AppointmentScheduling() {
           (a, b) =>
             new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime()
         );
-      console.log(
-        "AppointmentScheduling: Fetched appointments for last visit check:",
-        completedAppointments
-      );
       if (completedAppointments.length > 0) {
         setLastVisitDate(completedAppointments[0].visit_date);
       } else {
@@ -282,17 +253,11 @@ export default function AppointmentScheduling() {
   };
 
   const getAvailableVisitTypes = () => {
-    console.log(
-      "AppointmentScheduling: Getting visit types, lastVisitDate:",
-      lastVisitDate
-    );
-
     const types = [
       { value: "Consultation", label: "Consultation" },
       { value: "Follow-up", label: "Follow up" },
       { value: "others", label: "Others" },
     ];
-    console.log("last visit:", lastVisitDate);
     // Add follow-up if patient visited within 7 days
     if (lastVisitDate) {
       const lastVisit = new Date(lastVisitDate);
@@ -301,21 +266,16 @@ export default function AppointmentScheduling() {
         (today.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      console.log("AppointmentScheduling: Days since last visit:", daysDiff);
-
       if (daysDiff <= 7) {
         types.unshift({ value: "Follow-up", label: "Follow up" });
-        console.log("AppointmentScheduling: Added follow-up option");
       }
     }
 
     // Add first-time visit if no previous appointments exist
     if (!lastVisitDate) {
       types.unshift({ value: "First Time Visit", label: "First time visit" });
-      console.log("AppointmentScheduling: Added first-time visit option");
     }
 
-    console.log("AppointmentScheduling: Available visit types:", types);
     return types;
   };
   // On submit of the form
@@ -354,57 +314,68 @@ export default function AppointmentScheduling() {
     }
   };
 
-  const getAvailableTimeSlots = (selectedDate: Date | undefined) => {
-    const allTimeSlots = [
-      "09:00",
-      "09:30",
-      "10:00",
-      "10:30",
-      "11:00",
-      "11:30",
-      "12:00",
-      "12:30",
-      "14:00",
-      "14:30",
-      "15:00",
-      "15:30",
-      "16:00",
-      "16:30",
-      "17:00",
-      "17:30",
-      "18:00",
-      "18:30",
-      "19:00",
-      "19:30",
-      "20:00",
-      "20:30",
-      "21:00",
-      "21:30",
-      "22:00",
-      "22:30",
-      "23:00",
-      "23:30",
-      "24:00",
-      "24:30",
-    ];
+  const getAvailableTimeSlots = (
+    selectedDate: Date | undefined,
+    selectedDoctor: Doctor | null
+  ) => {
+    if (!selectedDate || !selectedDoctor || !selectedDoctor.availability)
+      return [];
 
-    if (!selectedDate) return allTimeSlots;
+    //If the doctor is on special availability
+    if (isAdhoc) {
+      const slots: string[] = [];
+      for (let hour = 0; hour < 24; hour++) {
+        const hourStr = hour.toString().padStart(2, "0");
+        slots.push(`${hourStr}:00`);
+        slots.push(`${hourStr}:30`);
+      }
+      return slots;
+    }
+    // Consistent day name comparison
+    const dayName = selectedDate
+      .toLocaleString("en-US", { weekday: "long" })
+      .trim()
+      .toLowerCase();
 
+    // Find availability for the selected day
+    const availability = selectedDoctor.availability.find((a) =>
+      a.days.some((d) => d.trim().toLowerCase() === dayName)
+    );
+
+    if (!availability) {
+      console.log("No availability for", dayName);
+      return [];
+    }
+
+    // Parse times safely as numbers
+    const inTime = Number(availability.time.in_time);
+    const outTime = Number(availability.time.out_time);
+
+    // Generate 30-min slots (24-hour format)
+    const slots: string[] = [];
+    for (let hour = inTime; hour < outTime; hour++) {
+      const hourStr = hour.toString().padStart(2, "0");
+      slots.push(`${hourStr}:00`);
+      slots.push(`${hourStr}:30`);
+    }
+    slots.push(`${outTime.toString().padStart(2, "0")}:00`); // include the last hour
+
+    // If not today, return all slots directly
     const today = new Date();
     const isToday = selectedDate.toDateString() === today.toDateString();
+    if (!isToday) return slots;
 
-    if (!isToday) return allTimeSlots;
+    // Filter out past slots if selected day is today
+    const currentMinutes = today.getHours() * 60 + today.getMinutes();
+    const nextHalfHour = Math.ceil(currentMinutes / 30) * 30;
 
-    // If today is selected, filter out past time slots
-    const currentHour = today.getHours();
-    const currentMinute = today.getMinutes();
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-    return allTimeSlots.filter((timeSlot) => {
-      const [hours, minutes] = timeSlot.split(":").map(Number);
-      const slotTimeInMinutes = hours * 60 + minutes;
-      return slotTimeInMinutes > currentTimeInMinutes;
+    const filteredSlots = slots.filter((slot) => {
+      const [h, m] = slot.split(":").map(Number);
+      const slotMinutes = h * 60 + m;
+      return slotMinutes >= nextHalfHour;
     });
+
+    return filteredSlots;
   };
 
   if (isLoading) {
@@ -500,10 +471,6 @@ export default function AppointmentScheduling() {
                                     key={patient.id}
                                     value={`${patient.first_name} ${patient.last_name}`}
                                     onSelect={() => {
-                                      console.log(
-                                        "AppointmentScheduling: Patient selected:",
-                                        patient
-                                      );
                                       setSelectedPatient(patient);
                                       field.onChange(patient.id);
                                       setPatientOpen(false);
@@ -566,35 +533,55 @@ export default function AppointmentScheduling() {
                             <CommandList>
                               <CommandEmpty>No doctors found.</CommandEmpty>
                               <CommandGroup>
-                                {doctors.map((doctor) => (
-                                  <CommandItem
-                                    key={doctor.id}
-                                    value={`${doctor.first_name} ${doctor.last_name}`}
-                                    onSelect={() => {
-                                      setSelectedDoctor(doctor);
-                                      field.onChange(doctor.id);
-                                      setDoctorOpen(false);
-                                      // Auto-fill department if available
-                                      if (doctor.department) {
-                                        form.setValue(
-                                          "department",
-                                          doctor.department
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex flex-col">
-                                      <span>
-                                        Dr. {doctor.first_name}{" "}
-                                        {doctor.last_name}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {doctor.specialization} •{" "}
-                                        {doctor.department}
-                                      </span>
-                                    </div>
-                                  </CommandItem>
-                                ))}
+                                {doctors.map((doctor) => {
+                                  const today = new Date().toLocaleString(
+                                    "en-US",
+                                    { weekday: "long" }
+                                  );
+                                  const isAvailableToday =
+                                    doctor.availability?.some((slot) =>
+                                      slot.days.includes(today)
+                                    );
+
+                                  return (
+                                    <CommandItem
+                                      key={doctor.id}
+                                      value={`${doctor.first_name} ${doctor.last_name}`}
+                                      onSelect={() => {
+                                        setSelectedDoctor(doctor);
+                                        field.onChange(doctor.id);
+                                        setDoctorOpen(false);
+                                        if (doctor.department) {
+                                          form.setValue(
+                                            "department",
+                                            doctor.department
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex justify-between items-center w-full">
+                                        <div className="flex flex-col">
+                                          <span>
+                                            Dr. {doctor.first_name}{" "}
+                                            {doctor.last_name}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {doctor.specialization} •{" "}
+                                            {doctor.department}
+                                          </span>
+                                        </div>
+                                        <div
+                                          className={cn(
+                                            "h-3 w-3 rounded-full",
+                                            isAvailableToday
+                                              ? "bg-green-500"
+                                              : "bg-red-500"
+                                          )}
+                                        ></div>
+                                      </div>
+                                    </CommandItem>
+                                  );
+                                })}
                               </CommandGroup>
                             </CommandList>
                           </Command>
@@ -681,12 +668,22 @@ export default function AppointmentScheduling() {
                         </FormControl>
                         <SelectContent>
                           {getAvailableTimeSlots(
-                            form.watch("appointment_date")
-                          ).map((time) => (
-                            <SelectItem key={time} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
+                            form.watch("appointment_date"),
+                            selectedDoctor
+                          ).length > 0 ? (
+                            getAvailableTimeSlots(
+                              form.watch("appointment_date"),
+                              selectedDoctor
+                            ).map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="p-2 text-sm text-muted-foreground">
+                              No available slots for this doctor today.
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -736,30 +733,16 @@ export default function AppointmentScheduling() {
                         <Building2 className="h-4 w-4" />
                         Department
                       </FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          console.log(
-                            "AppointmentScheduling: Visit type selected:",
-                            value
-                          );
-                          field.onChange(value);
-                        }}
-                        value={field.value}
-                        key={`visit-type-${selectedPatient?.id || "none"}`}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select department (optional)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {INDIAN_DEPARTMENTS.map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                      <FormControl>
+                        <Input
+                          placeholder="Department"
+                          value={selectedDoctor?.department || ""}
+                          disabled
+                          {...field}
+                        />
+                      </FormControl>
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -781,6 +764,33 @@ export default function AppointmentScheduling() {
                       />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isAdhoc"
+                render={() => (
+                  <FormItem className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isAdhoc}
+                        onChange={(e) => setIsAdhoc(e.target.checked)}
+                        id="adhoc"
+                        className="h-5 w-5 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                      />
+                      <label
+                        htmlFor="adhoc"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Special Availability
+                      </label>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Allow appointments outside normal schedule
+                    </span>
                   </FormItem>
                 )}
               />
