@@ -205,6 +205,9 @@
                   "last_name": {
                     "type": "string"
                   },
+                  "parent_name": {
+                    "type": "string"
+                  },
                   "email": {
                     "type": "string",
                     "format": "email"
@@ -258,6 +261,7 @@
                 "last_name": "Smith",
                 "email": "jane.smith@example.com",
                 "phone": "9876543210",
+                "parent_name": "Robert Smith",
                 "employee_type": [
                   {
                     "role_id": "R001",

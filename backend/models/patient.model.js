@@ -10,6 +10,7 @@ const patientSchema = new mongoose.Schema(
     email: { type: String, default: null },
     date_of_birth: { type: Date, default: null },
     gender: { type: String, default: null },
+    parent_name: { type: String, default: null },
     blood_group: { type: String, default: null },
     address: { type: String, default: null },
     medical_history: { type: String, default: null },

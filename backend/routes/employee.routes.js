@@ -1,31 +1,52 @@
-const express = require('express');
-const { body } = require('express-validator');
+const express = require("express");
+const { body } = require("express-validator");
 const router = express.Router();
-const employeeController = require('../controllers/employee.controller');
-
+const employeeController = require("../controllers/employee.controller");
 
 router.post(
-  '/createEmployee',
+  "/createEmployee",
   [
-    body('first_name').isString().isLength({ min: 2 }).withMessage('First name must be at least 2 characters'),
-    body('last_name').isString().isLength({ min: 2 }).withMessage('Last name must be at least 2 characters'),
-    body('email').isEmail().withMessage('Invalid email'),
-    body('phone').isString().isLength({ min: 10 }).withMessage('Phone must be at least 10 characters'),
-    body('employee_type.primary_role_type.role').notEmpty().withMessage("Primary role is required"),
-    body("employee_type.primary_role_type.role_name").notEmpty().withMessage("Primary role name is required"),
-     // ✅ Validate secondary roles (optional array)
-    body("employee_type.secondary_role_type").optional().isArray().withMessage("Secondary role type must be an array"),
-    body("employee_type.secondary_role_type.*.role").optional().isMongoId().withMessage("Secondary role must be a valid MongoDB ID"),
+    body("first_name")
+      .isString()
+      .isLength({ min: 2 })
+      .withMessage("First name must be at least 2 characters"),
+    body("last_name")
+      .isString()
+      .isLength({ min: 2 })
+      .withMessage("Last name must be at least 2 characters"),
+    body("email").isEmail().withMessage("Invalid email"),
+    body("phone")
+      .isString()
+      .isLength({ min: 10 })
+      .withMessage("Phone must be at least 10 characters"),
+    body("employee_type.primary_role_type.role")
+      .notEmpty()
+      .withMessage("Primary role is required"),
+    body("employee_type.primary_role_type.role_name")
+      .notEmpty()
+      .withMessage("Primary role name is required"),
+    // ✅ Validate secondary roles (optional array)
+    body("employee_type.secondary_role_type")
+      .optional()
+      .isArray()
+      .withMessage("Secondary role type must be an array"),
+    body("employee_type.secondary_role_type.*.role")
+      .optional()
+      .isMongoId()
+      .withMessage("Secondary role must be a valid MongoDB ID"),
     body("employee_type.secondary_role_type.*.role_name").optional().isString(),
-    body('department').optional().isString(),
-    body('salary').optional().isNumeric().withMessage('Salary must be numeric'),
-    body('address').optional().isString(),
-    body('emergency_contact_name').optional().isString(),
-    body('emergency_contact_phone').optional().isString(),
-    body('date_of_joining').optional().isISO8601().withMessage('date_of_joining must be an ISO date (YYYY-MM-DD)'),
+    body("department").optional().isString(),
+    body("salary").optional().isNumeric().withMessage("Salary must be numeric"),
+    body("address").optional().isString(),
+    body("emergency_contact_name").optional().isString(),
+    body("emergency_contact_phone").optional().isString(),
+    body("date_of_joining")
+      .optional()
+      .isISO8601()
+      .withMessage("date_of_joining must be an ISO date (YYYY-MM-DD)"),
   ],
 
-/* 
+  /* 
     #swagger.tags = ['Employees']
     #swagger.summary = 'Register a new employee'
     #swagger.requestBody = {
@@ -38,6 +59,7 @@ router.post(
             properties: {
               first_name: { type: "string" },
               last_name: { type: "string" },
+              parent_name: { type: "string" },
               email: { type: "string", format: "email" },
               phone: { type: "string" },
               employee_type: {
@@ -65,6 +87,7 @@ router.post(
             last_name: "Smith",
             email: "jane.smith@example.com",
             phone: "9876543210",
+            parent_name: "Robert Smith",
             employee_type: [
               { role_id: "R001", name: "Doctor" },
               { role_id: "R002", name: "Admin" }
@@ -87,8 +110,9 @@ router.post(
   employeeController.createEmployee
 );
 
-router.get('/getEmployees',  
-  
+router.get(
+  "/getEmployees",
+
   /* 
     #swagger.tags = ['Employees']
     #swagger.summary = 'Get all employees'
@@ -103,11 +127,12 @@ router.get('/getEmployees',
         }
       }
     }
-  */ employeeController.getEmployees);
+  */ employeeController.getEmployees
+);
 
-
-  router.get('/:employeeId',
-   /* 
+router.get(
+  "/:employeeId",
+  /* 
     #swagger.tags = ['Employees']
     #swagger.summary = 'Get employee by ID'
     #swagger.parameters['employeeId'] = {
@@ -126,10 +151,12 @@ router.get('/getEmployees',
     }
     #swagger.responses[404] = { description: "Employee not found" }
   */
-  employeeController.getEmployee);
+  employeeController.getEmployee
+);
 
-  // ✅ Update employee
-router.put('/updateEmployee/:employeeId',
+// ✅ Update employee
+router.put(
+  "/updateEmployee/:employeeId",
   /* 
     #swagger.tags = ['Employees']
     #swagger.summary = 'UPdate employee'
@@ -188,10 +215,8 @@ router.put('/updateEmployee/:employeeId',
     #swagger.responses[400] = { description: "Validation error" }
     #swagger.responses[500] = { description: "Server error" }
   */
-  
-  
-  
-  
-  employeeController.updateEmployee);
+
+  employeeController.updateEmployee
+);
 
 module.exports = router;
