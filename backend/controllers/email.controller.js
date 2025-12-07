@@ -103,25 +103,11 @@ async function sendEmail(id, params) {
   const parsedBody = applyTemplate(template.body, params || {});
   const parsedSubject = applyTemplate(template.subject, params || {});
   const parsedTo = applyTemplate(template.to, params || {});
-
-  const htmlBody = `<!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="UTF-8" />
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; }
-        </style>
-      </head>
-      <body>
-        ${parsedBody}
-      </body>
-    </html>`;
-
   return transporter.sendMail({
     from: template.from,
     to: parsedTo,
     subject: parsedSubject,
-    html: htmlBody,
+    html: parsedBody,
   });
 }
 
@@ -131,8 +117,17 @@ exports.sendEmail = sendEmail;
 // ✅ API endpoint wrapper
 exports.sendEmailApi = async (req, res) => {
   try {
-    const { id, params } = req.body;
-    const info = await sendEmail(id, params);
+    const { templateId, to, variables } = req.body;
+
+    if (!templateId) {
+      return res.status(400).json({ error: "templateId is required" });
+    }
+
+    const info = await sendEmail(templateId, {
+      ...variables,
+      email: to, // allows {{email}} to be replaced
+    });
+
     res.json({ message: "Email sent successfully", info });
   } catch (error) {
     res.status(500).json({ error: error.message });

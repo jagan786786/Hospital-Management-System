@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "concurrently \"npm:express-dev\" \"npm:fastapi-dev\"",
+    "dev": "concurrently \"npm:express-dev\"",
     "express-dev": "nodemon server.js",
     "fastapi-dev": "python -m uvicorn analysis.main:app --reload --port 5001 --app-dir ..",
     "test": "echo \"Error: no test specified\" && exit 1"

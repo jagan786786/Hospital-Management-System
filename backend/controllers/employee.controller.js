@@ -12,7 +12,7 @@ const EMPLOYEE_ID_PADDING = parseInt(
   process.env.EMPLOYEE_ID_PADDING || "6",
   10
 );
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL = process.env.FRONTEND_URL;
 const ONBOARDING_TEMPLATE_ID = process.env.ONBOARDING_TEMPLATE_ID;
 
 exports.createEmployee = async (req, res) => {
@@ -36,7 +36,6 @@ exports.createEmployee = async (req, res) => {
     emergency_contact_name,
     emergency_contact_phone,
     date_of_joining,
-  
   } = req.body;
 
   try {
@@ -122,7 +121,7 @@ exports.createEmployee = async (req, res) => {
         secondary_role_type: secondaryRoles,
       },
       availability: availability,
-      price:price,
+      price: price,
       department: department || null,
       salary: salary !== undefined && salary !== "" ? parseFloat(salary) : null,
       address: address || null,
@@ -135,32 +134,74 @@ exports.createEmployee = async (req, res) => {
 
     const employeeRegistered = await employee.save();
 
-    if (employeeRegistered) {
-      res.status(201).json({
-        message: "Employee created",
-        name: employee.first_name,
-        mongo_id: employee._id,
-        employee_id: employee.employee_id,
-        note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
-      });
+    try {
+      let emailSent = false;
+      let emailErrorMessage = null;
 
-      const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
+      if (employeeRegistered) {
+        const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
 
-      try {
-        if (ONBOARDING_TEMPLATE_ID) {
-          await sendEmail(ONBOARDING_TEMPLATE_ID, {
-            first_name: employee.first_name,
-            last_name: employee.last_name,
-            email: employee.email,
-            employee_id: employee.employee_id,
-            reset_link: resetLink,
-          });
-          emailSent = true;
+        // 🔹 Try sending email BEFORE sending API response
+        try {
+          if (!ONBOARDING_TEMPLATE_ID) {
+            emailErrorMessage =
+              "ONBOARDING_TEMPLATE_ID is missing (email not sent)";
+          } else {
+            await sendEmail(ONBOARDING_TEMPLATE_ID, {
+              first_name: employee.first_name,
+              last_name: employee.last_name,
+              email: employee.email,
+              employee_id: employee.employee_id,
+              reset_link: resetLink,
+            });
+
+            emailSent = true;
+          }
+        } catch (emailError) {
+          emailErrorMessage =
+            emailError.message || "Unknown error sending email";
+          console.error("Error sending onboarding email:", emailError);
         }
-      } catch (emailError) {
-        console.error("Error sending onboarding email:", emailError);
+
+        // 🔹 Now send API response with email status
+        return res.status(201).json({
+          message: "Employee created",
+          employee_id: employee.employee_id,
+          email_sent: emailSent,
+          email_error: emailErrorMessage,
+          note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
+        });
       }
+    } catch (err) {
+      console.error("Error creating employee:", err);
+      return res.status(500).json({ message: "Internal server error" });
     }
+    // if (employeeRegistered) {
+    //   res.status(201).json({
+    //     message: "Employee created",
+    //     name: employee.first_name,
+    //     mongo_id: employee._id,
+    //     employee_id: employee.employee_id,
+    //     note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
+    //   });
+
+    //   const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
+
+    //   try {
+    //     if (ONBOARDING_TEMPLATE_ID) {
+    //       await sendEmail(ONBOARDING_TEMPLATE_ID, {
+    //         first_name: employee.first_name,
+    //         last_name: employee.last_name,
+    //         email: employee.email,
+    //         employee_id: employee.employee_id,
+    //         reset_link: resetLink,
+    //       });
+    //       emailSent = true;
+    //     }
+    //   } catch (emailError) {
+    //     console.error("Error sending onboarding email:", emailError);
+    //   }
+    // }
   } catch (err) {
     console.error("Error creating employee:", err);
     return res.status(500).json({ message: "Internal server error" });

@@ -28,7 +28,6 @@ router.post(
   emailController.createTemplate
 );
 
-
 // Get All Templates
 router.get(
   "/getAllTemplates",
@@ -47,7 +46,6 @@ router.get(
   emailController.getAllTemplates
 );
 
-
 // Get Template by ID
 router.get(
   "/getTemplateById/:id",
@@ -65,7 +63,6 @@ router.get(
   */
   emailController.getTemplateById
 );
-
 
 // Update Template
 router.put(
@@ -97,7 +94,6 @@ router.put(
   emailController.updateTemplate
 );
 
-
 // Delete Template
 router.delete(
   "/deleteTemplate/:id",
@@ -115,7 +111,6 @@ router.delete(
   */
   emailController.deleteTemplate
 );
-
 
 // Send Email using a Template
 router.post(
@@ -146,7 +141,7 @@ router.post(
     #swagger.responses[400] = { description: "Validation error" }
     #swagger.responses[500] = { description: "Email sending failed" }
   */
-  emailController.sendEmail
+  emailController.sendEmailApi
 );
 
 module.exports = router;
