@@ -135,18 +135,32 @@ exports.createEmployee = async (req, res) => {
     const employeeRegistered = await employee.save();
 
     try {
+      console.log(
+        "As employee registered, About to handle email sending...",
+        employeeRegistered
+      );
       let emailSent = false;
       let emailErrorMessage = null;
 
-      if (employeeRegistered) {
-        const resetLink = `${FRONTEND_URL}/reset-password/${employee._id.toString()}`;
+      // Build reset link using saved document's _id (use employeeRegistered)
+      const savedId = employeeRegistered._id
+        ? employeeRegistered._id.toString()
+        : null;
+      const resetLink = savedId
+        ? `${FRONTEND_URL}/reset-password/${savedId}`
+        : null;
 
+      // Attempt to send onboarding email but fail-fast
+
+      if (employeeRegistered) {
         // 🔹 Try sending email BEFORE sending API response
         try {
           if (!ONBOARDING_TEMPLATE_ID) {
             emailErrorMessage =
               "ONBOARDING_TEMPLATE_ID is missing (email not sent)";
           } else {
+            console.log("this is the template id .", ONBOARDING_TEMPLATE_ID);
+            // sendEmailWithTimeout will reject if email fails or times out
             await sendEmail(ONBOARDING_TEMPLATE_ID, {
               first_name: employee.first_name,
               last_name: employee.last_name,
@@ -158,15 +172,18 @@ exports.createEmployee = async (req, res) => {
             emailSent = true;
           }
         } catch (emailError) {
+          // Normalize error message
           emailErrorMessage =
-            emailError.message || "Unknown error sending email";
+            (emailError && emailError.message) || String(emailError);
           console.error("Error sending onboarding email:", emailError);
         }
 
-        // 🔹 Now send API response with email status
+        // Return immediately with clear flags (employee created + email status)
+
         return res.status(201).json({
           message: "Employee created",
-          employee_id: employee.employee_id,
+          employee_id: employeeRegistered.employee_id,
+          employee_created: true,
           email_sent: emailSent,
           email_error: emailErrorMessage,
           note: "Default password has been set and stored hashed. Send password to employee via secure channel (email/portal).",
@@ -176,6 +193,7 @@ exports.createEmployee = async (req, res) => {
       console.error("Error creating employee:", err);
       return res.status(500).json({ message: "Internal server error" });
     }
+
     // if (employeeRegistered) {
     //   res.status(201).json({
     //     message: "Employee created",
