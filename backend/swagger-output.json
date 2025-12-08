@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:4000",
+      "url": "https://hospital-management-system-h26e.onrender.com/",
       "description": "Local server"
     }
   ],
@@ -24,9 +24,7 @@
     },
     "/api/patients/regsiterPatient": {
       "post": {
-        "tags": [
-          "Patients"
-        ],
+        "tags": ["Patients"],
         "summary": "Register a new patient",
         "description": "",
         "responses": {
@@ -66,9 +64,7 @@
     },
     "/api/patients/getPatients": {
       "get": {
-        "tags": [
-          "Patients"
-        ],
+        "tags": ["Patients"],
         "summary": "Get all patients",
         "description": "",
         "responses": {
@@ -83,9 +79,7 @@
     },
     "/api/patients/{id}": {
       "get": {
-        "tags": [
-          "Patients"
-        ],
+        "tags": ["Patients"],
         "summary": "Get Patient by id",
         "description": "",
         "parameters": [
@@ -111,9 +105,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Patients"
-        ],
+        "tags": ["Patients"],
         "summary": "Update patient details",
         "description": "",
         "parameters": [
@@ -163,9 +155,7 @@
     },
     "/api/employees/createEmployee": {
       "post": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Register a new employee",
         "description": "",
         "responses": {
@@ -230,9 +220,7 @@
                           "example": "Doctor"
                         }
                       },
-                      "required": [
-                        "role_id"
-                      ]
+                      "required": ["role_id"]
                     }
                   },
                   "department": {
@@ -286,9 +274,7 @@
     },
     "/api/employees/getEmployees": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Get all employees",
         "description": "",
         "responses": {
@@ -313,9 +299,7 @@
     },
     "/api/employees/{employeeId}": {
       "get": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "Get employee by ID",
         "description": "",
         "parameters": [
@@ -351,9 +335,7 @@
     },
     "/api/employees/updateEmployee/{employeeId}": {
       "put": {
-        "tags": [
-          "Employees"
-        ],
+        "tags": ["Employees"],
         "summary": "UPdate employee",
         "description": "",
         "parameters": [
@@ -425,9 +407,7 @@
                           "example": "Doctor"
                         }
                       },
-                      "required": [
-                        "role_id"
-                      ]
+                      "required": ["role_id"]
                     }
                   },
                   "department": {
@@ -480,9 +460,7 @@
     },
     "/api/appointments/createAppointment/": {
       "post": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Create a new appointment",
         "description": "",
         "responses": {
@@ -520,9 +498,7 @@
     },
     "/api/appointments/getAppointments/": {
       "get": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Fetch all appointments",
         "description": "",
         "responses": {
@@ -547,9 +523,7 @@
     },
     "/api/appointments/getAppointmentById/{id}": {
       "get": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Get an appointment by ID",
         "description": "",
         "parameters": [
@@ -585,9 +559,7 @@
     },
     "/api/appointments/updateAppointment/{id}": {
       "put": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Update appointment details",
         "description": "",
         "parameters": [
@@ -630,9 +602,7 @@
     },
     "/api/appointments/deleteAppointment/{id}": {
       "delete": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Delete appointment by ID",
         "description": "",
         "parameters": [
@@ -661,9 +631,7 @@
     },
     "/api/appointments/getAppointmentsByDoctor/{doctorId}": {
       "get": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Get all appointments of a specific doctor (optionally filter by visit date)",
         "description": "",
         "parameters": [
@@ -712,9 +680,7 @@
     },
     "/api/appointments/getAppointmentsByParams": {
       "get": {
-        "tags": [
-          "Appointments"
-        ],
+        "tags": ["Appointments"],
         "summary": "Fetch appointments by optional filters (defaults to today)",
         "description": "Query params:\r  - patientId — filter by patient ObjectId\r  - appointmentId — filter by appointment ObjectId\r  - appointmentDate — filter by date (YYYY-MM-DD). If omitted (and appointmentId omitted), defaults to today's appointments.\r  ",
         "parameters": [
@@ -781,9 +747,7 @@
     },
     "/api/inventory/createInventory": {
       "post": {
-        "tags": [
-          "Inventory"
-        ],
+        "tags": ["Inventory"],
         "summary": "Create a new inventory item",
         "description": "",
         "responses": {
@@ -831,9 +795,7 @@
                 "is_controlled_substance": false,
                 "prescription_required": true,
                 "drug_license_number": "LIC123456",
-                "suppliers": [
-                  "68cd0b241433a82bd0c7ec37"
-                ],
+                "suppliers": ["68cd0b241433a82bd0c7ec37"],
                 "manufacturer": "GlaxoSmithKline",
                 "linked_to_billing": true,
                 "linked_to_emr": true,
@@ -847,9 +809,7 @@
     },
     "/api/inventory/getInventories": {
       "get": {
-        "tags": [
-          "Inventory"
-        ],
+        "tags": ["Inventory"],
         "summary": "Fetch all inventory items",
         "description": "",
         "responses": {
@@ -874,9 +834,7 @@
     },
     "/api/inventory/getInventoryById/{id}": {
       "get": {
-        "tags": [
-          "Inventory"
-        ],
+        "tags": ["Inventory"],
         "summary": "Get inventory item by ID",
         "description": "",
         "parameters": [
@@ -912,9 +870,7 @@
     },
     "/api/inventory/updateInventory/{id}": {
       "put": {
-        "tags": [
-          "Inventory"
-        ],
+        "tags": ["Inventory"],
         "summary": "Update an inventory item",
         "description": "",
         "parameters": [
@@ -976,9 +932,7 @@
                 "is_controlled_substance": false,
                 "prescription_required": true,
                 "drug_license_number": "LIC123456",
-                "suppliers": [
-                  "68cd0b241433a82bd0c7ec37"
-                ],
+                "suppliers": ["68cd0b241433a82bd0c7ec37"],
                 "manufacturer": "GlaxoSmithKline",
                 "linked_to_billing": true,
                 "linked_to_emr": true,
@@ -992,9 +946,7 @@
     },
     "/api/inventory/deleteInventory/{id}": {
       "delete": {
-        "tags": [
-          "Inventory"
-        ],
+        "tags": ["Inventory"],
         "summary": "Delete an inventory item",
         "description": "",
         "parameters": [
@@ -1023,9 +975,7 @@
     },
     "/api/prescriptions/createPrescription": {
       "post": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Create a new prescription",
         "description": "",
         "responses": {
@@ -1078,9 +1028,7 @@
     },
     "/api/prescriptions/getPrescriptions": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Fetch all prescriptions",
         "description": "",
         "responses": {
@@ -1105,9 +1053,7 @@
     },
     "/api/prescriptions/getPrescriptionById/{id}": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Get prescription by ID",
         "description": "",
         "parameters": [
@@ -1143,9 +1089,7 @@
     },
     "/api/prescriptions/updatePrescription/{id}": {
       "put": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Update a prescription",
         "description": "",
         "parameters": [
@@ -1188,9 +1132,7 @@
     },
     "/api/prescriptions/deletePrescription/{id}": {
       "delete": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Delete prescription",
         "description": "",
         "parameters": [
@@ -1219,9 +1161,7 @@
     },
     "/api/prescriptions/getPrescriptionsByPatientId/{id}": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Get prescription by ID",
         "description": "",
         "parameters": [
@@ -1257,9 +1197,7 @@
     },
     "/api/prescriptions/getPrescriptionsByPatient": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Get prescriptions by patient ID (optional appointment filter)",
         "description": "",
         "parameters": [
@@ -1323,10 +1261,7 @@
                     "weight": "95",
                     "bmi": "26.3",
                     "spo2": "100",
-                    "complaints": [
-                      "fever",
-                      "vomiting"
-                    ],
+                    "complaints": ["fever", "vomiting"],
                     "medicines": [
                       {
                         "name": "Paracetamol",
@@ -1354,9 +1289,7 @@
     },
     "/api/prescriptions/upsertPrescription": {
       "post": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Create or update a prescription (upsert)",
         "description": "",
         "responses": {
@@ -1391,9 +1324,7 @@
     },
     "/api/prescriptions/suggestions": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Get top medicine suggestions for a doctor based on complaints",
         "description": "",
         "parameters": [
@@ -1444,9 +1375,7 @@
     },
     "/api/prescriptions/getPrescriptionsByDoctor": {
       "get": {
-        "tags": [
-          "Prescriptions"
-        ],
+        "tags": ["Prescriptions"],
         "summary": "Get prescriptions for a doctor within a date range",
         "description": "",
         "parameters": [
@@ -1610,9 +1539,7 @@
     },
     "/api/screen/createScreen": {
       "post": {
-        "tags": [
-          "Screens"
-        ],
+        "tags": ["Screens"],
         "summary": "Create a new screen",
         "description": "",
         "responses": {
@@ -1646,9 +1573,7 @@
     },
     "/api/screen/getAllScreens": {
       "get": {
-        "tags": [
-          "Screens"
-        ],
+        "tags": ["Screens"],
         "summary": "Fetch all screens",
         "description": "",
         "responses": {
@@ -1673,9 +1598,7 @@
     },
     "/api/screen/getScreenById/{id}": {
       "get": {
-        "tags": [
-          "Screens"
-        ],
+        "tags": ["Screens"],
         "summary": "Get screen by ID",
         "description": "",
         "parameters": [
@@ -1711,9 +1634,7 @@
     },
     "/api/screen/updateScreen/{id}": {
       "put": {
-        "tags": [
-          "Screens"
-        ],
+        "tags": ["Screens"],
         "summary": "Update a screen",
         "description": "",
         "parameters": [
@@ -1757,9 +1678,7 @@
     },
     "/api/screen/deleteScreen/{id}": {
       "delete": {
-        "tags": [
-          "Screens"
-        ],
+        "tags": ["Screens"],
         "summary": "Delete a screen",
         "description": "",
         "parameters": [
@@ -1788,9 +1707,7 @@
     },
     "/api/roles/createRole": {
       "post": {
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "summary": "Create a new role",
         "description": "",
         "responses": {
@@ -1825,9 +1742,7 @@
     },
     "/api/roles/getRoles": {
       "get": {
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "summary": "Fetch all roles",
         "description": "",
         "responses": {
@@ -1852,9 +1767,7 @@
     },
     "/api/roles/getRoleById/{id}": {
       "get": {
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "summary": "Get role by ID",
         "description": "",
         "parameters": [
@@ -1890,9 +1803,7 @@
     },
     "/api/roles/updateRole/{id}": {
       "put": {
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "summary": "Update a role",
         "description": "",
         "parameters": [
@@ -1926,10 +1837,7 @@
               },
               "example": {
                 "description": "Updated description",
-                "permissions": [
-                  "view_patients",
-                  "manage_inventory"
-                ]
+                "permissions": ["view_patients", "manage_inventory"]
               }
             }
           }
@@ -1938,9 +1846,7 @@
     },
     "/api/roles/deleteRole/{id}": {
       "delete": {
-        "tags": [
-          "Roles"
-        ],
+        "tags": ["Roles"],
         "summary": "Delete a role",
         "description": "",
         "parameters": [
@@ -1969,9 +1875,7 @@
     },
     "/api/email/createTemplate": {
       "post": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Create a new email template",
         "description": "",
         "responses": {
@@ -2008,9 +1912,7 @@
     },
     "/api/email/getAllTemplates": {
       "get": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Get all email templates",
         "description": "",
         "responses": {
@@ -2035,9 +1937,7 @@
     },
     "/api/email/getTemplateById/{id}": {
       "get": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Get an email template by ID",
         "description": "",
         "parameters": [
@@ -2066,9 +1966,7 @@
     },
     "/api/email/updateTemplate/{id}": {
       "put": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Update an email template",
         "description": "",
         "parameters": [
@@ -2111,9 +2009,7 @@
     },
     "/api/email/deleteTemplate/{id}": {
       "delete": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Delete an email template",
         "description": "",
         "parameters": [
@@ -2142,9 +2038,7 @@
     },
     "/api/email/send": {
       "post": {
-        "tags": [
-          "EmailTemplates"
-        ],
+        "tags": ["EmailTemplates"],
         "summary": "Send an email using a template",
         "description": "",
         "responses": {
@@ -2181,10 +2075,7 @@
                     }
                   }
                 },
-                "required": [
-                  "templateId",
-                  "to"
-                ]
+                "required": ["templateId", "to"]
               }
             }
           }
@@ -2193,9 +2084,7 @@
     },
     "/api/supplier/createSupplier": {
       "post": {
-        "tags": [
-          "Suppliers"
-        ],
+        "tags": ["Suppliers"],
         "summary": "Create a new supplier",
         "description": "",
         "responses": {
@@ -2230,9 +2119,7 @@
     },
     "/api/supplier/getSuppliers": {
       "get": {
-        "tags": [
-          "Suppliers"
-        ],
+        "tags": ["Suppliers"],
         "summary": "Get all suppliers",
         "description": "",
         "responses": {
@@ -2257,9 +2144,7 @@
     },
     "/api/supplier/getSupplierById/{id}": {
       "get": {
-        "tags": [
-          "Suppliers"
-        ],
+        "tags": ["Suppliers"],
         "summary": "Get a supplier by ID",
         "description": "",
         "parameters": [
@@ -2288,9 +2173,7 @@
     },
     "/api/supplier/updateSupplier/{id}": {
       "put": {
-        "tags": [
-          "Suppliers"
-        ],
+        "tags": ["Suppliers"],
         "summary": "Update a supplier",
         "description": "",
         "parameters": [
@@ -2333,9 +2216,7 @@
     },
     "/api/supplier/deleteSupplier/{id}": {
       "delete": {
-        "tags": [
-          "Suppliers"
-        ],
+        "tags": ["Suppliers"],
         "summary": "Delete a supplier",
         "description": "",
         "parameters": [
@@ -2364,9 +2245,7 @@
     },
     "/api/customer/getCustomers": {
       "get": {
-        "tags": [
-          "Customers"
-        ],
+        "tags": ["Customers"],
         "summary": "Fetch all customers",
         "description": "Retrieves a list of all customers sorted alphabetically by name.",
         "responses": {
@@ -2409,9 +2288,7 @@
     },
     "/api/customer/createCustomer": {
       "post": {
-        "tags": [
-          "Customers"
-        ],
+        "tags": ["Customers"],
         "summary": "Create a new customer",
         "description": "",
         "responses": {
@@ -2445,9 +2322,7 @@
     },
     "/api/customer/updateCustomer/{id}": {
       "put": {
-        "tags": [
-          "Customers"
-        ],
+        "tags": ["Customers"],
         "summary": "Update existing customer details",
         "description": "",
         "parameters": [
@@ -2502,9 +2377,7 @@
     },
     "/api/sale/createSale": {
       "post": {
-        "tags": [
-          "Sales"
-        ],
+        "tags": ["Sales"],
         "summary": "Create a new sale",
         "description": "",
         "responses": {
@@ -2558,9 +2431,7 @@
     },
     "/api/sale/getSales": {
       "get": {
-        "tags": [
-          "Sales"
-        ],
+        "tags": ["Sales"],
         "summary": "Get all sales",
         "description": "",
         "responses": {
@@ -2575,9 +2446,7 @@
     },
     "/api/sale/{id}": {
       "get": {
-        "tags": [
-          "Sales"
-        ],
+        "tags": ["Sales"],
         "summary": "Get a sale by ID",
         "description": "",
         "parameters": [
@@ -2606,9 +2475,7 @@
     },
     "/api/sale/updateSale/{id}": {
       "put": {
-        "tags": [
-          "Sales"
-        ],
+        "tags": ["Sales"],
         "summary": "Update a sale by ID",
         "description": "",
         "parameters": [
@@ -2654,9 +2521,7 @@
     },
     "/api/saledeleteSale/{id}": {
       "delete": {
-        "tags": [
-          "Sales"
-        ],
+        "tags": ["Sales"],
         "summary": "Delete a sale by ID",
         "description": "",
         "parameters": [
@@ -2754,11 +2619,7 @@
                   },
                   "enum": {
                     "type": "array",
-                    "example": [
-                      "Male",
-                      "Female",
-                      "Other"
-                    ],
+                    "example": ["Male", "Female", "Other"],
                     "items": {
                       "type": "string"
                     }
@@ -2822,10 +2683,7 @@
           },
           "required": {
             "type": "array",
-            "example": [
-              "first_name",
-              "last_name"
-            ],
+            "example": ["first_name", "last_name"],
             "items": {
               "type": "string"
             }
