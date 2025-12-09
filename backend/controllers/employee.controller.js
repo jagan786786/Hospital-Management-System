@@ -147,7 +147,7 @@ exports.createEmployee = async (req, res) => {
         ? employeeRegistered._id.toString()
         : null;
       const resetLink = savedId
-        ? `${FRONTEND_URL}/reset-password/${savedId}`
+        ? `${FRONTEND_URL}reset-password/${savedId}`
         : null;
 
       // Attempt to send onboarding email but fail-fast
